@@ -1,5 +1,3 @@
-// src/utils/dashboardUtils.js
-
 export function getOverallStats(
   companies,
   dsaTopics,
@@ -61,17 +59,17 @@ export function getProgressStats(
     companySuccessRate:
       companies.length === 0
         ? 0
-        : ((offers / companies.length) * 100).toFixed(1),
+        : Math.round((offers / companies.length) * 1000) / 10,
 
     dsaSolvedRate:
       dsaTopics.length === 0
         ? 0
-        : ((solved / dsaTopics.length) * 100).toFixed(1),
+        : Math.round((solved / dsaTopics.length) * 1000) / 10,
 
     projectCompletionRate:
       projects.length === 0
         ? 0
-        : ((completedProjects / projects.length) * 100).toFixed(1),
+        : Math.round((completedProjects / projects.length) * 1000) / 10,
 
     totalOffers: offers,
     solvedProblems: solved,
@@ -155,4 +153,14 @@ export function getQuickInsights(
     offers,
     onHoldProjects,
   };
+}
+
+export function getDateAdded(date = "") {
+  if (date.trim() !== "") return date;
+
+  return new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
