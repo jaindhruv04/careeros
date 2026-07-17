@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { CompanyContext } from "../context/CompanyContext";
+import { getDateAdded } from "../utils/dateUtils";
 
 function CompanyTracker() {
   const { companies, setCompanies } = useContext(CompanyContext);
@@ -22,6 +23,7 @@ function CompanyTracker() {
       role,
       status,
       applicationDate,
+      dateAdded: getDateAdded(applicationDate),
       notes,
     };
 
@@ -62,10 +64,7 @@ function CompanyTracker() {
           placeholder="Role"
         />
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="Applied">Applied</option>
           <option value="Interviewing">Interviewing</option>
           <option value="Offer">Offer</option>
@@ -111,9 +110,10 @@ function CompanyTracker() {
       <ul>
         {filteredCompanies.map((company) => (
           <li key={company.id}>
-            <strong>{company.name}</strong> — {company.role} —{" "}
-            {company.applicationDate} — {company.status}
-
+            <strong>{company.name}</strong> — {company.role} — {company.status}
+            <div>
+              <strong>Date Added:</strong> {company.dateAdded}
+            </div>
             {company.notes.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {company.notes}

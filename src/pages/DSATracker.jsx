@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { DSAContext } from "../context/DSAContext";
+import { getDateAdded } from "../utils/dateUtils";
 
 function DSATracker() {
   const { dsaTopics, setDsaTopics } = useContext(DSAContext);
@@ -25,6 +26,7 @@ function DSATracker() {
       difficulty,
       status,
       revisionNeeded,
+      dateAdded: getDateAdded(),
       notes,
     };
 
@@ -44,8 +46,7 @@ function DSATracker() {
       .includes(searchText.toLowerCase());
 
     const matchesDifficulty =
-      difficultyFilter === "All" ||
-      problem.difficulty === difficultyFilter;
+      difficultyFilter === "All" || problem.difficulty === difficultyFilter;
 
     const matchesRevision =
       revisionFilter === "All" ||
@@ -81,10 +82,7 @@ function DSATracker() {
           <option value="Hard">Hard</option>
         </select>
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="Not Started">Not Started</option>
           <option value="In Progress">In Progress</option>
           <option value="Solved">Solved</option>
@@ -142,10 +140,10 @@ function DSATracker() {
           <li key={problem.id}>
             <strong>{problem.name}</strong> — {problem.topic} —{" "}
             {problem.difficulty} — {problem.status} —{" "}
-            {problem.revisionNeeded
-              ? "Needs Revision"
-              : "No Revision Needed"}
-
+            {problem.revisionNeeded ? "Needs Revision" : "No Revision Needed"}
+            <div>
+              <strong>Date Added:</strong> {problem.dateAdded}
+            </div>
             {problem.notes?.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {problem.notes}

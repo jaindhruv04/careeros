@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { InterviewContext } from "../context/InterviewContext";
+import { getDateAdded } from "../utils/dateUtils";
 
 function InterviewJournal() {
   const { interviewEntries, setInterviewEntries } =
@@ -46,8 +47,7 @@ function InterviewJournal() {
       .toLowerCase()
       .includes(searchText.toLowerCase());
 
-    const matchesRound =
-      roundFilter === "All" || entry.round === roundFilter;
+    const matchesRound = roundFilter === "All" || entry.round === roundFilter;
 
     return matchesSearch && matchesRound;
   });
@@ -63,10 +63,7 @@ function InterviewJournal() {
           placeholder="Company"
         />
 
-        <select
-          value={round}
-          onChange={(e) => setRound(e.target.value)}
-        >
+        <select value={round} onChange={(e) => setRound(e.target.value)}>
           <option value="">Select Round</option>
           <option value="Online Assessment">Online Assessment</option>
           <option value="Technical">Technical</option>
@@ -132,15 +129,21 @@ function InterviewJournal() {
         {filteredEntries.map((entry) => (
           <li key={entry.id}>
             <strong>{entry.company}</strong> - {entry.round}
-            <br />
-            <strong>Questions:</strong> {entry.questionsAsked}
-            <br />
-            <strong>My Answer:</strong> {entry.myAnswer}
-            <br />
-            <strong>Mistakes:</strong> {entry.mistakes}
-            <br />
-            <strong>Lessons Learned:</strong> {entry.lessonsLearned}
-
+            <div>
+              <strong>Date Added:</strong> {entry.dateAdded}
+            </div>
+            <div>
+              <strong>Questions:</strong> {entry.questionsAsked}
+            </div>
+            <div>
+              <strong>My Answer:</strong> {entry.myAnswer}
+            </div>
+            <div>
+              <strong>Mistakes:</strong> {entry.mistakes}
+            </div>
+            <div>
+              <strong>Lessons Learned:</strong> {entry.lessonsLearned}
+            </div>
             {entry.notes?.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {entry.notes}

@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import { ProjectContext } from "../context/ProjectContext";
+import { getDateAdded } from "../utils/dateUtils";
 
 function ProjectTracker() {
   const { projects, setProjects } = useContext(ProjectContext);
@@ -22,6 +23,7 @@ function ProjectTracker() {
       techStack,
       progress,
       status,
+      dateAdded: getDateAdded(),
       notes,
     };
 
@@ -71,10 +73,7 @@ function ProjectTracker() {
           placeholder="Progress"
         />
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="Planning">Planning</option>
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
@@ -116,7 +115,9 @@ function ProjectTracker() {
           <li key={project.id}>
             <strong>{project.name}</strong> - {project.techStack} -{" "}
             {project.progress}% - {project.status}
-
+            <div>
+              <strong>Date Added:</strong> {project.dateAdded}
+            </div>
             {project.notes?.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {project.notes}
