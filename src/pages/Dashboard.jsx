@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { CompanyContext } from "../context/CompanyContext";
 
 function Dashboard() {
-  const [goals, setGoals] = useState([]);
+  const { companies } = useContext(CompanyContext);
 
+  const [goals, setGoals] = useState([]);
   const [goalText, setGoalText] = useState("");
 
   function handleAddGoal(e) {
@@ -21,8 +23,8 @@ function Dashboard() {
   function toggleGoal(goalId) {
     setGoals(
       goals.map((goal) =>
-        goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
-      )
+        goal.id === goalId ? { ...goal, completed: !goal.completed } : goal,
+      ),
     );
   }
 
@@ -31,6 +33,10 @@ function Dashboard() {
       <h1>Dashboard</h1>
 
       <h2>Daily Goals</h2>
+<h2>Application Summary</h2>
+<p>Total applications: {companies.length}</p>
+
+
       <form onSubmit={handleAddGoal}>
         <input
           value={goalText}
