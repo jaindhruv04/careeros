@@ -13,24 +13,26 @@ import { ProjectProvider } from "./context/ProjectContext";
 
 function App() {
   return (
-    <>
-      <Navbar />
-      <CompanyProvider>
-        <DSAProvider>
-          <InterviewProvider>
-            <ProjectProvider>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/companies" element={<CompanyTracker />} />
-                <Route path="/dsa" element={<DSATracker />} />
-                <Route path="/interviews" element={<InterviewJournal />} />
-                <Route path="/projects" element={<ProjectTracker />} />
-              </Routes>
-            </ProjectProvider>
-          </InterviewProvider>
-        </DSAProvider>
-      </CompanyProvider>
-    </>
+    <CompanyProvider>
+      <DSAProvider>
+        <InterviewProvider>
+          <ProjectProvider>
+            <div className="flex min-h-screen bg-bg">
+              <Navbar />
+              <main className="flex-1 px-10 py-8">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/companies" element={<CompanyTracker />} />
+                  <Route path="/dsa" element={<DSATracker />} />
+                  <Route path="/interviews" element={<InterviewJournal />} />
+                  <Route path="/projects" element={<ProjectTracker />} />
+                </Routes>
+              </main>
+            </div>
+          </ProjectProvider>
+        </InterviewProvider>
+      </DSAProvider>
+    </CompanyProvider>
   );
 }
 

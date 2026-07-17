@@ -1,6 +1,12 @@
 import { useState, useContext } from "react";
 import { CompanyContext } from "../context/CompanyContext";
 import { getDateAdded } from "../utils/dateUtils";
+import ModuleHeader from "../components/ModuleHeader";
+import PriorityBadge from "../components/PriorityBadge";
+
+const inputClass = "bg-bg border border-border rounded px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
+const selectClass = inputClass;
+const buttonClass = "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function CompanyTracker() {
   const { companies, setCompanies } = useContext(CompanyContext);
@@ -41,125 +47,68 @@ function CompanyTracker() {
   }
 
   const filteredCompanies = companies.filter((company) => {
-    const matchesSearch = company.name
-      .toLowerCase()
-      .includes(searchText.toLowerCase());
-
-    const matchesStatus =
-      statusFilter === "All" || company.status === statusFilter;
-
-    const matchesPriority =
-      priorityFilter === "All" || company.priority === priorityFilter;
-
+    const matchesSearch = company.name.toLowerCase().includes(searchText.toLowerCase());
+    const matchesStatus = statusFilter === "All" || company.status === statusFilter;
+    const matchesPriority = priorityFilter === "All" || company.priority === priorityFilter;
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
   return (
-    <div>
-      <h1>Company Tracker</h1>
+    <div className="max-w-4xl">
+      <ModuleHeader label="Company Tracker" />
 
-      <form onSubmit={handleSubmit}>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Company name"
-        />
+      <div className="bg-surface border border-border rounded-lg p-4 mb-8">
+        <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-center">
+          <input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="Company name" />
+          <input className={inputClass} value={role} onChange={(e) => setRole(e.target.value)} placeholder="Role" />
+          <select className={selectClass} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="Applied">Applied</option>
+            <option value="Interviewing">Interviewing</option>
+            <option value="Offer">Offer</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+          <input className={inputClass} value={applicationDate} onChange={(e) => setApplicationDate(e.target.value)} placeholder="Application date" />
+          <select className={selectClass} value={priority} onChange={(e) => setPriority(e.target.value)}>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <input className={inputClass} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (optional)" />
+          <button type="submit" className={buttonClass}>Add company</button>
+        </form>
+      </div>
 
-        <input
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          placeholder="Role"
-        />
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
+      <div className="flex flex-wrap gap-3 mb-6">
+        <input className={inputClass} value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search by company name" />
+        <select className={selectClass} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="All">All statuses</option>
           <option value="Applied">Applied</option>
           <option value="Interviewing">Interviewing</option>
           <option value="Offer">Offer</option>
           <option value="Rejected">Rejected</option>
         </select>
-
-        <input
-          value={applicationDate}
-          onChange={(e) => setApplicationDate(e.target.value)}
-          placeholder="Application date"
-        />
-
-        <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-        >
+        <select className={selectClass} value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+          <option value="All">All priorities</option>
           <option value="High">High</option>
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>
         </select>
+      </div>
 
-        <input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notes (optional)"
-        />
-
-        <button type="submit">Add Company</button>
-      </form>
-
-      <hr />
-
-      <h2>Search & Filter</h2>
-
-      <input
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        placeholder="Search by company name"
-      />
-
-      <select
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-      >
-        <option value="All">All</option>
-        <option value="Applied">Applied</option>
-        <option value="Interviewing">Interviewing</option>
-        <option value="Offer">Offer</option>
-        <option value="Rejected">Rejected</option>
-      </select>
-
-      <select
-        value={priorityFilter}
-        onChange={(e) => setPriorityFilter(e.target.value)}
-      >
-        <option value="All">All Priorities</option>
-        <option value="High">High</option>
-        <option value="Medium">Medium</option>
-        <option value="Low">Low</option>
-      </select>
-
-      <ul>
+      <ul className="flex flex-col gap-3">
         {filteredCompanies.map((company) => (
-          <li key={company.id}>
-            <strong>{company.name}</strong> — {company.role} — {company.status}
-
+          <li key={company.id} className="bg-surface border border-border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-text-primary font-medium">{company.name} <span className="text-text-muted font-normal">— {company.role}</span></p>
+              <PriorityBadge priority={company.priority} />
+            </div>
+            <p className="text-sm text-text-muted mb-1">Status: <span className="text-text-primary">{company.status}</span></p>
             {company.applicationDate.trim() !== "" && (
-              <div>
-                <strong>Application Date:</strong>{" "}
-                {company.applicationDate}
-              </div>
+              <p className="text-sm text-text-muted mb-1">Application date: {company.applicationDate}</p>
             )}
-
-            <div>
-              <strong>Priority:</strong> {company.priority}
-            </div>
-
-            <div>
-              <strong>Date Added:</strong> {company.dateAdded}
-            </div>
-
+            <p className="text-sm text-text-muted mb-1">Added: {company.dateAdded}</p>
             {company.notes.trim() !== "" && (
-              <div>
-                <strong>Notes:</strong> {company.notes}
-              </div>
+              <p className="text-sm text-text-muted">Notes: {company.notes}</p>
             )}
           </li>
         ))}
