@@ -9,6 +9,7 @@ function DSATracker() {
   const [difficulty, setDifficulty] = useState("Easy");
   const [status, setStatus] = useState("Not Started");
   const [revisionNeeded, setRevisionNeeded] = useState(false);
+  const [notes, setNotes] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
@@ -24,6 +25,7 @@ function DSATracker() {
       difficulty,
       status,
       revisionNeeded,
+      notes,
     };
 
     setDsaTopics([...dsaTopics, newDsaTopic]);
@@ -33,6 +35,7 @@ function DSATracker() {
     setDifficulty("Easy");
     setStatus("Not Started");
     setRevisionNeeded(false);
+    setNotes("");
   }
 
   const filteredTopics = dsaTopics.filter((problem) => {
@@ -96,6 +99,12 @@ function DSATracker() {
           Needs Revision
         </label>
 
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes (optional)"
+        />
+
         <button type="submit">Add Problem</button>
       </form>
 
@@ -131,9 +140,17 @@ function DSATracker() {
       <ul>
         {filteredTopics.map((problem) => (
           <li key={problem.id}>
-            {problem.name} — {problem.topic} — {problem.difficulty} —{" "}
-            {problem.status} —{" "}
-            {problem.revisionNeeded ? "Needs Revision" : "No Revision Needed"}
+            <strong>{problem.name}</strong> — {problem.topic} —{" "}
+            {problem.difficulty} — {problem.status} —{" "}
+            {problem.revisionNeeded
+              ? "Needs Revision"
+              : "No Revision Needed"}
+
+            {problem.notes?.trim() !== "" && (
+              <div>
+                <strong>Notes:</strong> {problem.notes}
+              </div>
+            )}
           </li>
         ))}
       </ul>

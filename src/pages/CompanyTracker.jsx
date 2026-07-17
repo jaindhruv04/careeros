@@ -55,7 +55,7 @@ function CompanyTracker() {
           onChange={(e) => setName(e.target.value)}
           placeholder="Company name"
         />
-        
+
         <input
           value={role}
           onChange={(e) => setRole(e.target.value)}
@@ -81,7 +81,7 @@ function CompanyTracker() {
         <input
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notes"
+          placeholder="Notes (optional)"
         />
 
         <button type="submit">Add Company</button>
@@ -111,8 +111,14 @@ function CompanyTracker() {
       <ul>
         {filteredCompanies.map((company) => (
           <li key={company.id}>
-            {company.name} — {company.role} — {company.applicationDate} —{" "}
-            {company.status} — {company.notes}
+            <strong>{company.name}</strong> — {company.role} —{" "}
+            {company.applicationDate} — {company.status}
+
+            {company.notes.trim() !== "" && (
+              <div>
+                <strong>Notes:</strong> {company.notes}
+              </div>
+            )}
           </li>
         ))}
       </ul>

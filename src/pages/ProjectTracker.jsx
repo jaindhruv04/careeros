@@ -8,6 +8,7 @@ function ProjectTracker() {
   const [techStack, setTechStack] = useState("");
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Planning");
+  const [notes, setNotes] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -21,6 +22,7 @@ function ProjectTracker() {
       techStack,
       progress,
       status,
+      notes,
     };
 
     setProjects([...projects, project]);
@@ -29,6 +31,7 @@ function ProjectTracker() {
     setTechStack("");
     setProgress(0);
     setStatus("Planning");
+    setNotes("");
   }
 
   const filteredProjects = projects.filter((project) => {
@@ -78,6 +81,12 @@ function ProjectTracker() {
           <option value="On Hold">On Hold</option>
         </select>
 
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes (optional)"
+        />
+
         <button type="submit">Add Project</button>
       </form>
 
@@ -105,8 +114,14 @@ function ProjectTracker() {
       <ul>
         {filteredProjects.map((project) => (
           <li key={project.id}>
-            {project.name} - {project.techStack} - {project.progress}% -{" "}
-            {project.status}
+            <strong>{project.name}</strong> - {project.techStack} -{" "}
+            {project.progress}% - {project.status}
+
+            {project.notes?.trim() !== "" && (
+              <div>
+                <strong>Notes:</strong> {project.notes}
+              </div>
+            )}
           </li>
         ))}
       </ul>

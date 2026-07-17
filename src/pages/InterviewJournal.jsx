@@ -11,6 +11,7 @@ function InterviewJournal() {
   const [myAnswer, setMyAnswer] = useState("");
   const [mistakes, setMistakes] = useState("");
   const [lessonsLearned, setLessonsLearned] = useState("");
+  const [notes, setNotes] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [roundFilter, setRoundFilter] = useState("All");
@@ -26,6 +27,7 @@ function InterviewJournal() {
       myAnswer,
       mistakes,
       lessonsLearned,
+      notes,
     };
 
     setInterviewEntries([...interviewEntries, interviewEntry]);
@@ -36,6 +38,7 @@ function InterviewJournal() {
     setMyAnswer("");
     setMistakes("");
     setLessonsLearned("");
+    setNotes("");
   }
 
   const filteredEntries = interviewEntries.filter((entry) => {
@@ -95,6 +98,12 @@ function InterviewJournal() {
           placeholder="Lessons Learned"
         />
 
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes (optional)"
+        />
+
         <button type="submit">Add Entry</button>
       </form>
 
@@ -122,9 +131,21 @@ function InterviewJournal() {
       <ul>
         {filteredEntries.map((entry) => (
           <li key={entry.id}>
-            {entry.company} - {entry.round} - {entry.questionsAsked} -{" "}
-            {entry.myAnswer} - {entry.mistakes} -{" "}
-            {entry.lessonsLearned}
+            <strong>{entry.company}</strong> - {entry.round}
+            <br />
+            <strong>Questions:</strong> {entry.questionsAsked}
+            <br />
+            <strong>My Answer:</strong> {entry.myAnswer}
+            <br />
+            <strong>Mistakes:</strong> {entry.mistakes}
+            <br />
+            <strong>Lessons Learned:</strong> {entry.lessonsLearned}
+
+            {entry.notes?.trim() !== "" && (
+              <div>
+                <strong>Notes:</strong> {entry.notes}
+              </div>
+            )}
           </li>
         ))}
       </ul>
