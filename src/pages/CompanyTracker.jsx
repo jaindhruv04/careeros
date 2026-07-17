@@ -107,7 +107,7 @@ function CompanyTracker() {
               <p className="text-sm text-text-muted mb-1">Application date: {company.applicationDate}</p>
             )}
             <p className="text-sm text-text-muted mb-1">Added: {company.dateAdded}</p>
-            {company.notes.trim() !== "" && (
+            {company.notes?.trim() !== "" && (
               <p className="text-sm text-text-muted">Notes: {company.notes}</p>
             )}
           </li>
