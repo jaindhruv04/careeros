@@ -12,6 +12,9 @@ function InterviewJournal() {
   const [mistakes, setMistakes] = useState("");
   const [lessonsLearned, setLessonsLearned] = useState("");
 
+  const [searchText, setSearchText] = useState("");
+  const [roundFilter, setRoundFilter] = useState("All");
+
   function handleSubmit(e) {
     e.preventDefault();
 
@@ -35,6 +38,17 @@ function InterviewJournal() {
     setLessonsLearned("");
   }
 
+  const filteredEntries = interviewEntries.filter((entry) => {
+    const matchesSearch = entry.company
+      .toLowerCase()
+      .includes(searchText.toLowerCase());
+
+    const matchesRound =
+      roundFilter === "All" || entry.round === roundFilter;
+
+    return matchesSearch && matchesRound;
+  });
+
   return (
     <div>
       <h1>Interview Journal</h1>
@@ -46,11 +60,16 @@ function InterviewJournal() {
           placeholder="Company"
         />
 
-        <input
+        <select
           value={round}
           onChange={(e) => setRound(e.target.value)}
-          placeholder="Round"
-        />
+        >
+          <option value="">Select Round</option>
+          <option value="Online Assessment">Online Assessment</option>
+          <option value="Technical">Technical</option>
+          <option value="Managerial">Managerial</option>
+          <option value="HR">HR</option>
+        </select>
 
         <textarea
           value={questionsAsked}
@@ -79,11 +98,33 @@ function InterviewJournal() {
         <button type="submit">Add Entry</button>
       </form>
 
+      <hr />
+
+      <h2>Search & Filter</h2>
+
+      <input
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        placeholder="Search by company"
+      />
+
+      <select
+        value={roundFilter}
+        onChange={(e) => setRoundFilter(e.target.value)}
+      >
+        <option value="All">All</option>
+        <option value="Online Assessment">Online Assessment</option>
+        <option value="Technical">Technical</option>
+        <option value="Managerial">Managerial</option>
+        <option value="HR">HR</option>
+      </select>
+
       <ul>
-        {interviewEntries.map((entry) => (
+        {filteredEntries.map((entry) => (
           <li key={entry.id}>
             {entry.company} - {entry.round} - {entry.questionsAsked} -{" "}
-            {entry.myAnswer} - {entry.mistakes} - {entry.lessonsLearned}
+            {entry.myAnswer} - {entry.mistakes} -{" "}
+            {entry.lessonsLearned}
           </li>
         ))}
       </ul>

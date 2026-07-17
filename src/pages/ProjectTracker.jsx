@@ -1,73 +1,130 @@
 import { useState, useContext } from "react";
-import { ProjectContext } from "../context/ProjectContext";
+import { InterviewContext } from "../context/InterviewContext";
 
-function ProjectTracker() {
-  const { projects, setProjects } = useContext(ProjectContext);
+function InterviewJournal() {
+  const { interviewEntries, setInterviewEntries } =
+    useContext(InterviewContext);
 
-  const [name, setName] = useState("");
-  const [techStack, setTechStack] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("");
+  const [company, setCompany] = useState("");
+  const [round, setRound] = useState("");
+  const [questionsAsked, setQuestionsAsked] = useState("");
+  const [myAnswer, setMyAnswer] = useState("");
+  const [mistakes, setMistakes] = useState("");
+  const [lessonsLearned, setLessonsLearned] = useState("");
+
+  const [searchText, setSearchText] = useState("");
+  const [roundFilter, setRoundFilter] = useState("All");
 
   function handleSubmit(e) {
     e.preventDefault();
 
-    const project = {
+    const interviewEntry = {
       id: Date.now(),
-      name,
-      techStack,
-      progress,
-      status,
+      company,
+      round,
+      questionsAsked,
+      myAnswer,
+      mistakes,
+      lessonsLearned,
     };
 
-    setProjects([...projects, project]);
+    setInterviewEntries([...interviewEntries, interviewEntry]);
 
-    setName("");
-    setTechStack("");
-    setProgress(0);
-    setStatus("");
+    setCompany("");
+    setRound("");
+    setQuestionsAsked("");
+    setMyAnswer("");
+    setMistakes("");
+    setLessonsLearned("");
   }
+
+  const filteredEntries = interviewEntries.filter((entry) => {
+    const matchesSearch = entry.company
+      .toLowerCase()
+      .includes(searchText.toLowerCase());
+
+    const matchesRound =
+      roundFilter === "All" || entry.round === roundFilter;
+
+    return matchesSearch && matchesRound;
+  });
 
   return (
     <div>
-      <h1>Project Tracker</h1>
+      <h1>Interview Journal</h1>
 
       <form onSubmit={handleSubmit}>
         <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Project Name"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          placeholder="Company"
         />
 
-        <input
-          value={techStack}
-          onChange={(e) => setTechStack(e.target.value)}
-          placeholder="Tech Stack"
+        <select
+          value={round}
+          onChange={(e) => setRound(e.target.value)}
+        >
+          <option value="">Select Round</option>
+          <option value="Online Assessment">Online Assessment</option>
+          <option value="Technical">Technical</option>
+          <option value="Managerial">Managerial</option>
+          <option value="HR">HR</option>
+        </select>
+
+        <textarea
+          value={questionsAsked}
+          onChange={(e) => setQuestionsAsked(e.target.value)}
+          placeholder="Questions Asked"
         />
 
-        <input
-          type="number"
-          min="0"
-          max="100"
-          value={progress}
-          onChange={(e) => setProgress(Number(e.target.value))}
-          placeholder="Progress"
+        <textarea
+          value={myAnswer}
+          onChange={(e) => setMyAnswer(e.target.value)}
+          placeholder="My Answer"
         />
 
-        <input
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          placeholder="Status"
+        <textarea
+          value={mistakes}
+          onChange={(e) => setMistakes(e.target.value)}
+          placeholder="Mistakes"
         />
 
-        <button type="submit">Add Project</button>
+        <textarea
+          value={lessonsLearned}
+          onChange={(e) => setLessonsLearned(e.target.value)}
+          placeholder="Lessons Learned"
+        />
+
+        <button type="submit">Add Entry</button>
       </form>
 
+      <hr />
+
+      <h2>Search & Filter</h2>
+
+      <input
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        placeholder="Search by company"
+      />
+
+      <select
+        value={roundFilter}
+        onChange={(e) => setRoundFilter(e.target.value)}
+      >
+        <option value="All">All</option>
+        <option value="Online Assessment">Online Assessment</option>
+        <option value="Technical">Technical</option>
+        <option value="Managerial">Managerial</option>
+        <option value="HR">HR</option>
+      </select>
+
       <ul>
-        {projects.map((project) => (
-          <li key={project.id}>
-            {project.name} - {project.techStack} - {project.progress}% -{" "}
-            {project.status}
+        {filteredEntries.map((entry) => (
+          <li key={entry.id}>
+            {entry.company} - {entry.round} - {entry.questionsAsked} -{" "}
+            {entry.myAnswer} - {entry.mistakes} -{" "}
+            {entry.lessonsLearned}
           </li>
         ))}
       </ul>
@@ -75,4 +132,4 @@ function ProjectTracker() {
   );
 }
 
-export default ProjectTracker;
+export default InterviewJournal;
