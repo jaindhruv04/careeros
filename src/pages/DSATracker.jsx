@@ -12,6 +12,7 @@ function DSATracker() {
 
   const [searchText, setSearchText] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
+  const [revisionFilter, setRevisionFilter] = useState("All");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -43,7 +44,12 @@ function DSATracker() {
       difficultyFilter === "All" ||
       problem.difficulty === difficultyFilter;
 
-    return matchesSearch && matchesDifficulty;
+    const matchesRevision =
+      revisionFilter === "All" ||
+      (revisionFilter === "Yes" && problem.revisionNeeded) ||
+      (revisionFilter === "No" && !problem.revisionNeeded);
+
+    return matchesSearch && matchesDifficulty && matchesRevision;
   });
 
   return (
@@ -54,7 +60,7 @@ function DSATracker() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="DSA Topic"
+          placeholder="Problem Name"
         />
 
         <input
@@ -90,7 +96,7 @@ function DSATracker() {
           Needs Revision
         </label>
 
-        <button type="submit">Add DSA Topic</button>
+        <button type="submit">Add Problem</button>
       </form>
 
       <hr />
@@ -107,10 +113,19 @@ function DSATracker() {
         value={difficultyFilter}
         onChange={(e) => setDifficultyFilter(e.target.value)}
       >
-        <option value="All">All</option>
+        <option value="All">All Difficulties</option>
         <option value="Easy">Easy</option>
         <option value="Medium">Medium</option>
         <option value="Hard">Hard</option>
+      </select>
+
+      <select
+        value={revisionFilter}
+        onChange={(e) => setRevisionFilter(e.target.value)}
+      >
+        <option value="All">All Problems</option>
+        <option value="Yes">Needs Revision</option>
+        <option value="No">No Revision Needed</option>
       </select>
 
       <ul>
@@ -118,7 +133,7 @@ function DSATracker() {
           <li key={problem.id}>
             {problem.name} — {problem.topic} — {problem.difficulty} —{" "}
             {problem.status} —{" "}
-            {problem.revisionNeeded ? "Yes" : "No"}
+            {problem.revisionNeeded ? "Needs Revision" : "No Revision Needed"}
           </li>
         ))}
       </ul>
