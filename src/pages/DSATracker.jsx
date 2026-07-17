@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { DSAContext } from "../context/DSAContext";
 
 function DSATracker() {
-  const [dsaTopics, setDsaTopics] = useState([]);
+  const { dsaTopics, setDsaTopics } = useContext(DSAContext);
 
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("");

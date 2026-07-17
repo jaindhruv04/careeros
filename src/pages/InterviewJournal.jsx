@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { InterviewContext } from "../context/InterviewContext";
 
 function InterviewJournal() {
-  const [interviewEntries, setInterviewEntries] = useState([]);
+  const { interviewEntries, setInterviewEntries } =
+    useContext(InterviewContext);
 
   const [company, setCompany] = useState("");
   const [round, setRound] = useState("");

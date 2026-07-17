@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { ProjectContext } from "../context/ProjectContext";
 
 function ProjectTracker() {
-  const [projects, setProjects] = useState([]);
+  const { projects, setProjects } = useContext(ProjectContext);
 
   const [name, setName] = useState("");
   const [techStack, setTechStack] = useState("");
