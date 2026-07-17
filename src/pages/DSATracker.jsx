@@ -10,11 +10,13 @@ function DSATracker() {
   const [difficulty, setDifficulty] = useState("Easy");
   const [status, setStatus] = useState("Not Started");
   const [revisionNeeded, setRevisionNeeded] = useState(false);
+  const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [revisionFilter, setRevisionFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -26,6 +28,7 @@ function DSATracker() {
       difficulty,
       status,
       revisionNeeded,
+      priority,
       dateAdded: getDateAdded(),
       notes,
     };
@@ -37,6 +40,7 @@ function DSATracker() {
     setDifficulty("Easy");
     setStatus("Not Started");
     setRevisionNeeded(false);
+    setPriority("Medium");
     setNotes("");
   }
 
@@ -46,14 +50,24 @@ function DSATracker() {
       .includes(searchText.toLowerCase());
 
     const matchesDifficulty =
-      difficultyFilter === "All" || problem.difficulty === difficultyFilter;
+      difficultyFilter === "All" ||
+      problem.difficulty === difficultyFilter;
 
     const matchesRevision =
       revisionFilter === "All" ||
       (revisionFilter === "Yes" && problem.revisionNeeded) ||
       (revisionFilter === "No" && !problem.revisionNeeded);
 
-    return matchesSearch && matchesDifficulty && matchesRevision;
+    const matchesPriority =
+      priorityFilter === "All" ||
+      problem.priority === priorityFilter;
+
+    return (
+      matchesSearch &&
+      matchesDifficulty &&
+      matchesRevision &&
+      matchesPriority
+    );
   });
 
   return (
@@ -82,7 +96,10 @@ function DSATracker() {
           <option value="Hard">Hard</option>
         </select>
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
           <option value="Not Started">Not Started</option>
           <option value="In Progress">In Progress</option>
           <option value="Solved">Solved</option>
@@ -96,6 +113,15 @@ function DSATracker() {
           />
           Needs Revision
         </label>
+
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+        >
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
 
         <input
           value={notes}
@@ -135,15 +161,33 @@ function DSATracker() {
         <option value="No">No Revision Needed</option>
       </select>
 
+      <select
+        value={priorityFilter}
+        onChange={(e) => setPriorityFilter(e.target.value)}
+      >
+        <option value="All">All Priorities</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+
       <ul>
         {filteredTopics.map((problem) => (
           <li key={problem.id}>
             <strong>{problem.name}</strong> — {problem.topic} —{" "}
             {problem.difficulty} — {problem.status} —{" "}
-            {problem.revisionNeeded ? "Needs Revision" : "No Revision Needed"}
+            {problem.revisionNeeded
+              ? "Needs Revision"
+              : "No Revision Needed"}
+
+            <div>
+              <strong>Priority:</strong> {problem.priority}
+            </div>
+
             <div>
               <strong>Date Added:</strong> {problem.dateAdded}
             </div>
+
             {problem.notes?.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {problem.notes}

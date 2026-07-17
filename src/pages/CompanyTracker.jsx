@@ -9,10 +9,12 @@ function CompanyTracker() {
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("Applied");
   const [applicationDate, setApplicationDate] = useState("");
+  const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -24,6 +26,7 @@ function CompanyTracker() {
       status,
       applicationDate,
       dateAdded: getDateAdded(applicationDate),
+      priority,
       notes,
     };
 
@@ -33,6 +36,7 @@ function CompanyTracker() {
     setRole("");
     setStatus("Applied");
     setApplicationDate("");
+    setPriority("Medium");
     setNotes("");
   }
 
@@ -44,7 +48,10 @@ function CompanyTracker() {
     const matchesStatus =
       statusFilter === "All" || company.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesPriority =
+      priorityFilter === "All" || company.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
   return (
@@ -64,7 +71,10 @@ function CompanyTracker() {
           placeholder="Role"
         />
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
           <option value="Applied">Applied</option>
           <option value="Interviewing">Interviewing</option>
           <option value="Offer">Offer</option>
@@ -76,6 +86,15 @@ function CompanyTracker() {
           onChange={(e) => setApplicationDate(e.target.value)}
           placeholder="Application date"
         />
+
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+        >
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
 
         <input
           value={notes}
@@ -107,13 +126,36 @@ function CompanyTracker() {
         <option value="Rejected">Rejected</option>
       </select>
 
+      <select
+        value={priorityFilter}
+        onChange={(e) => setPriorityFilter(e.target.value)}
+      >
+        <option value="All">All Priorities</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+
       <ul>
         {filteredCompanies.map((company) => (
           <li key={company.id}>
             <strong>{company.name}</strong> — {company.role} — {company.status}
+
+            {company.applicationDate.trim() !== "" && (
+              <div>
+                <strong>Application Date:</strong>{" "}
+                {company.applicationDate}
+              </div>
+            )}
+
+            <div>
+              <strong>Priority:</strong> {company.priority}
+            </div>
+
             <div>
               <strong>Date Added:</strong> {company.dateAdded}
             </div>
+
             {company.notes.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {company.notes}

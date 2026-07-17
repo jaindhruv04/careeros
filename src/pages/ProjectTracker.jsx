@@ -9,10 +9,12 @@ function ProjectTracker() {
   const [techStack, setTechStack] = useState("");
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Planning");
+  const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -23,6 +25,7 @@ function ProjectTracker() {
       techStack,
       progress,
       status,
+      priority,
       dateAdded: getDateAdded(),
       notes,
     };
@@ -33,6 +36,7 @@ function ProjectTracker() {
     setTechStack("");
     setProgress(0);
     setStatus("Planning");
+    setPriority("Medium");
     setNotes("");
   }
 
@@ -44,7 +48,15 @@ function ProjectTracker() {
     const matchesStatus =
       statusFilter === "All" || project.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesPriority =
+      priorityFilter === "All" ||
+      project.priority === priorityFilter;
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesPriority
+    );
   });
 
   return (
@@ -73,11 +85,23 @@ function ProjectTracker() {
           placeholder="Progress"
         />
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
           <option value="Planning">Planning</option>
           <option value="In Progress">In Progress</option>
           <option value="Completed">Completed</option>
           <option value="On Hold">On Hold</option>
+        </select>
+
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+        >
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
         </select>
 
         <input
@@ -110,14 +134,30 @@ function ProjectTracker() {
         <option value="On Hold">On Hold</option>
       </select>
 
+      <select
+        value={priorityFilter}
+        onChange={(e) => setPriorityFilter(e.target.value)}
+      >
+        <option value="All">All Priorities</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+
       <ul>
         {filteredProjects.map((project) => (
           <li key={project.id}>
             <strong>{project.name}</strong> - {project.techStack} -{" "}
             {project.progress}% - {project.status}
+
+            <div>
+              <strong>Priority:</strong> {project.priority}
+            </div>
+
             <div>
               <strong>Date Added:</strong> {project.dateAdded}
             </div>
+
             {project.notes?.trim() !== "" && (
               <div>
                 <strong>Notes:</strong> {project.notes}
