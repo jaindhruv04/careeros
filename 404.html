@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+
+    <script>
+      const path = window.location.pathname.replace("/careeros", "");
+
+      sessionStorage.setItem(
+        "redirect",
+        path + window.location.search + window.location.hash
+      );
+
+      window.location.replace("/careeros/");
+    </script>
+  </head>
+
+  <body></body>
+</html>
