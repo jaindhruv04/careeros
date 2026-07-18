@@ -1,4 +1,4 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect } from "react";
 
 export const DSAContext = createContext();
 
@@ -44,7 +44,20 @@ function dsaReducer(state, action) {
 }
 
 export function DSAProvider({ children }) {
-  const [dsaTopics, dispatch] = useReducer(dsaReducer, []);
+  const storedDSATopics =
+    JSON.parse(localStorage.getItem("dsaTopics")) || [];
+
+  const [dsaTopics, dispatch] = useReducer(
+    dsaReducer,
+    storedDSATopics
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      "dsaTopics",
+      JSON.stringify(dsaTopics)
+    );
+  }, [dsaTopics]);
 
   return (
     <DSAContext.Provider value={{ dsaTopics, dispatch }}>

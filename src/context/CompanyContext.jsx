@@ -1,4 +1,4 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect } from "react";
 
 export const CompanyContext = createContext();
 
@@ -44,7 +44,20 @@ function companyReducer(state, action) {
 }
 
 export function CompanyProvider({ children }) {
-  const [companies, dispatch] = useReducer(companyReducer, []);
+  const storedCompanies =
+    JSON.parse(localStorage.getItem("companies")) || [];
+
+  const [companies, dispatch] = useReducer(
+    companyReducer,
+    storedCompanies
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      "companies",
+      JSON.stringify(companies)
+    );
+  }, [companies]);
 
   return (
     <CompanyContext.Provider value={{ companies, dispatch }}>

@@ -1,4 +1,4 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect } from "react";
 
 export const ProjectContext = createContext();
 
@@ -44,7 +44,20 @@ function projectReducer(state, action) {
 }
 
 export function ProjectProvider({ children }) {
-  const [projects, dispatch] = useReducer(projectReducer, []);
+  const storedProjects =
+    JSON.parse(localStorage.getItem("projects")) || [];
+
+  const [projects, dispatch] = useReducer(
+    projectReducer,
+    storedProjects
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      "projects",
+      JSON.stringify(projects)
+    );
+  }, [projects]);
 
   return (
     <ProjectContext.Provider value={{ projects, dispatch }}>

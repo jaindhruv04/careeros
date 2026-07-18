@@ -1,4 +1,4 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect } from "react";
 
 export const InterviewContext = createContext();
 
@@ -44,7 +44,20 @@ function interviewReducer(state, action) {
 }
 
 export function InterviewProvider({ children }) {
-  const [interviewEntries, dispatch] = useReducer(interviewReducer, []);
+  const storedInterviewEntries =
+    JSON.parse(localStorage.getItem("interviewEntries")) || [];
+
+  const [interviewEntries, dispatch] = useReducer(
+    interviewReducer,
+    storedInterviewEntries
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      "interviewEntries",
+      JSON.stringify(interviewEntries)
+    );
+  }, [interviewEntries]);
 
   return (
     <InterviewContext.Provider value={{ interviewEntries, dispatch }}>
