@@ -1,0 +1,18 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  status    String
+  priority  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
