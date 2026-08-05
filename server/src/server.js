@@ -1,11 +1,15 @@
 import express from "express";
 import prisma from "./lib/prisma.js";
+import authRouter from "./routes/auth.js";
+import { protect } from "./middleware/auth.js";
 
 const app = express();
-app.use(express.json());
 const PORT = 5000;
+app.use(express.json());
 
-app.post("/api/companies", async (req, res) => {
+app.use("/api/auth", authRouter);
+
+app.post("/api/companies", protect, async (req, res) => {
   try {
     const { name, status, priority } = req.body;
     const validStatuses = ["Applied", "Interview", "Offer", "Rejected"];
@@ -16,7 +20,7 @@ app.post("/api/companies", async (req, res) => {
         .status(400)
         .json({ error: "name, status, and priority are required" });
     }
-    
+
     if (!validPriorities.includes(priority)) {
       return res.status(400).json({ error: "Invalid priority value" });
     }
@@ -30,6 +34,7 @@ app.post("/api/companies", async (req, res) => {
         name,
         status,
         priority,
+        userId: req.userId,
       },
     });
 
@@ -42,20 +47,20 @@ app.post("/api/companies", async (req, res) => {
   }
 });
 
-app.get("/api/companies", async (req, res) => {
-  const { status } = req.query;
-
-  const companies = await prisma.company.findMany({
-    where: status ? { status } : {},
-  });
-
-  res.status(200).json({
-    count: companies.length,
-    companies,
-  });
+app.get("/api/companies", protect, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const companies = await prisma.company.findMany({
+      where: status ? { status, userId: req.userId } : { userId: req.userId },
+    });
+    res.status(200).json({ count: companies.length, companies });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
-app.get("/api/companies/:id", async (req, res) => {
+
+app.get("/api/companies/:id", protect, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const company = await prisma.company.findUnique({ where: { id } });
@@ -70,7 +75,7 @@ app.get("/api/companies/:id", async (req, res) => {
   }
 });
 
-app.patch("/api/companies/:id", async (req, res) => {
+app.patch("/api/companies/:id", protect, async (req, res) => {
   try {
     const id = Number(req.params.id);
 
@@ -88,7 +93,7 @@ app.patch("/api/companies/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/companies/:id", async (req, res) => {
+app.delete("/api/companies/:id", protect, async (req, res) => {
   try {
     const id = Number(req.params.id);
     await prisma.company.delete({ where: { id } });
