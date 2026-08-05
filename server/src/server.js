@@ -6,20 +6,40 @@ app.use(express.json());
 const PORT = 5000;
 
 app.post("/api/companies", async (req, res) => {
-  const { name, status, priority } = req.body;
+  try {
+    const { name, status, priority } = req.body;
+    const validStatuses = ["Applied", "Interview", "Offer", "Rejected"];
+    const validPriorities = ["High", "Medium", "Low"];
 
-  const company = await prisma.company.create({
-    data: {
-      name,
-      status,
-      priority,
-    },
-  });
+    if (!name || !status || !priority) {
+      return res
+        .status(400)
+        .json({ error: "name, status, and priority are required" });
+    }
+    
+    if (!validPriorities.includes(priority)) {
+      return res.status(400).json({ error: "Invalid priority value" });
+    }
 
-  res.status(201).json({
-    message: "Company created",
-    company,
-  });
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid status value" });
+    }
+
+    const company = await prisma.company.create({
+      data: {
+        name,
+        status,
+        priority,
+      },
+    });
+
+    res.status(201).json({
+      message: "Company created",
+      company,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 app.get("/api/companies", async (req, res) => {
