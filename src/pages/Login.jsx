@@ -13,7 +13,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();  // ← move it here
+  const navigate = useNavigate(); 
 
   async function handleSubmit(e) {
     e.preventDefault();
