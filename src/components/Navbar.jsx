@@ -10,7 +10,8 @@ const links = [
 
 function Navbar() {
   return (
-    <aside className="w-56 shrink-0 bg-surface border-r border-border px-4 py-6 flex flex-col gap-1">
+    <aside className="w-56 shrink-0 bg-surface border-r border-border px-4 py-6 flex flex-col gap-1 h-screen sticky top-0">
+
       <p className="font-mono text-sm tracking-widest text-accent mb-8 px-2">
         CAREER<span className="text-text-primary">OS</span>
       </p>
@@ -31,6 +32,21 @@ function Navbar() {
           {link.label}
         </NavLink>
       ))}
+
+      <div className="mt-auto">
+        <NavLink
+          to="/login"
+          className={({ isActive }) =>
+            `px-3 py-2 rounded text-sm font-mono tracking-wide transition-colors ${
+              isActive
+                ? "bg-accent/10 text-accent"
+                : "text-text-muted hover:text-text-primary hover:bg-white/5"
+            }`
+          }
+        >
+          Login
+        </NavLink>
+      </div>
     </aside>
   );
 }

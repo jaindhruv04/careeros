@@ -14,7 +14,10 @@ const buttonClass =
   "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function CompanyTracker() {
-  const { companies, dispatch } = useContext(CompanyContext);
+  // const { companies, dispatch } = useContext(CompanyContext);
+  const { companies, addCompany } = useContext(CompanyContext); 
+
+
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -29,70 +32,60 @@ function CompanyTracker() {
 
   const [editingId, setEditingId] = useState(null);
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  async function handleSubmit(e) {
+  e.preventDefault();
+  await addCompany({ name, status, priority });
+  // clear form
+  setName("");
+  setRole("");
+  setStatus("Applied");
+  setApplicationDate("");
+  setPriority("Medium");
+  setNotes("");
+}
 
-    const newCompany = {
-      id: Date.now(),
-      name,
-      role,
-      status,
-      applicationDate,
-      dateAdded: getDateAdded(applicationDate),
-      priority,
-      notes,
-      archived: false,
-    };
-
-    dispatch({
-      type: "ADD_COMPANY",
-      payload: newCompany,
-    });
-
-    setName("");
-    setRole("");
-    setStatus("Applied");
-    setApplicationDate("");
-    setPriority("Medium");
-    setNotes("");
-  }
 
   function deleteCompany(id) {
-    dispatch({
-      type: "DELETE_COMPANY",
-      payload: id,
-    });
+    // TODO: call API to delete
+    // dispatch({
+    //   type: "DELETE_COMPANY",
+    //   payload: id,
+    // });
   }
 
   function archiveCompany(id) {
-    dispatch({
-      type: "ARCHIVE_COMPANY",
-      payload: id,
-    });
+    // TODO: call API to archive
+    // dispatch({
+    //   type: "ARCHIVE_COMPANY",
+    //   payload: id,
+    // });
   }
 
   function restoreCompany(id) {
-    dispatch({
-      type: "RESTORE_COMPANY",
-      payload: id,
-    });
+    // TODO: call API to restore
+    // dispatch({
+    //   type: "RESTORE_COMPANY",
+    //   payload: id,
+    // });
   }
 
   function changeStatus(id, newStatus) {
-    dispatch({
-      type: "CHANGE_STATUS",
-      payload: {
-        id,
-        status: newStatus,
-      },
-    });
+    // TODO: call API to change status
+    // dispatch({
+    //   type: "CHANGE_STATUS",
+    //   payload: {
+    //     id,
+    //     status: newStatus,
+    //   },
+    // });
   }
 
   function saveEdit(company) {
-    dispatch({
-      type: "EDIT_COMPANY",
-      payload: company,
-    });
+    // TODO: call API to edit
+    // dispatch({
+    //   type: "EDIT_COMPANY",
+    //   payload: company,
+    // });
 
     setEditingId(null);
   }
@@ -240,17 +233,19 @@ function CompanyTracker() {
                   <span className="text-text-primary">{company.status}</span>
                 </p>
 
-                {company.applicationDate.trim() !== "" && (
+                {company.applicationDate && company.applicationDate.trim() !== "" && (
                   <p className="text-sm text-text-muted mb-1">
                     Application date: {company.applicationDate}
                   </p>
                 )}
 
-                <p className="text-sm text-text-muted mb-1">
-                  Added: {company.dateAdded}
-                </p>
+                {company.dateAdded && (
+                  <p className="text-sm text-text-muted mb-1">
+                    Added: {company.dateAdded}
+                  </p>
+                )}
 
-                {company.notes.trim() !== "" && (
+                {company.notes && company.notes.trim() !== "" && (
                   <p className="text-sm text-text-muted mb-3">
                     Notes: {company.notes}
                   </p>

@@ -1,3 +1,4 @@
+import cors from "cors";
 import express from "express";
 import prisma from "./lib/prisma.js";
 import authRouter from "./routes/auth.js";
@@ -6,6 +7,12 @@ import { protect } from "./middleware/auth.js";
 const app = express();
 const PORT = 5000;
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 
 app.use("/api/auth", authRouter);
 
@@ -58,7 +65,6 @@ app.get("/api/companies", protect, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 app.get("/api/companies/:id", protect, async (req, res) => {
   try {
