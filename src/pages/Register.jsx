@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import {apiFetch} from "../utils/api";
-
+import { Link } from "react-router-dom";
 
 const inputClass =
   "w-full bg-bg border border-border rounded px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
@@ -13,23 +11,9 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault();
-
-    const res = await apiFetch("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      navigate("/login");
-    }
-    else {
-      setError(data.error);
-    }
   }
 
   return (

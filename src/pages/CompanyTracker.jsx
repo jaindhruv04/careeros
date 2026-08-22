@@ -14,10 +14,7 @@ const buttonClass =
   "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function CompanyTracker() {
-  // const { companies, dispatch } = useContext(CompanyContext);
-  const { companies, addCompany } = useContext(CompanyContext); 
-
-
+  const { companies, dispatch } = useContext(CompanyContext);
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -32,61 +29,39 @@ function CompanyTracker() {
 
   const [editingId, setEditingId] = useState(null);
 
-  async function handleSubmit(e) {
-  e.preventDefault();
-  await addCompany({ name, status, priority });
-  // clear form
-  setName("");
-  setRole("");
-  setStatus("Applied");
-  setApplicationDate("");
-  setPriority("Medium");
-  setNotes("");
-}
+  function handleSubmit(e) {
+    e.preventDefault();
+    dispatch({
+      type: "ADD_COMPANY",
+      payload: { id: Date.now(), name, role, status, applicationDate, priority, notes },
+    });
+    setName("");
+    setRole("");
+    setStatus("Applied");
+    setApplicationDate("");
+    setPriority("Medium");
+    setNotes("");
+  }
 
 
   function deleteCompany(id) {
-    // TODO: call API to delete
-    // dispatch({
-    //   type: "DELETE_COMPANY",
-    //   payload: id,
-    // });
+    dispatch({ type: "DELETE_COMPANY", payload: id });
   }
 
   function archiveCompany(id) {
-    // TODO: call API to archive
-    // dispatch({
-    //   type: "ARCHIVE_COMPANY",
-    //   payload: id,
-    // });
+    dispatch({ type: "ARCHIVE_COMPANY", payload: id });
   }
 
   function restoreCompany(id) {
-    // TODO: call API to restore
-    // dispatch({
-    //   type: "RESTORE_COMPANY",
-    //   payload: id,
-    // });
+    dispatch({ type: "RESTORE_COMPANY", payload: id });
   }
 
   function changeStatus(id, newStatus) {
-    // TODO: call API to change status
-    // dispatch({
-    //   type: "CHANGE_STATUS",
-    //   payload: {
-    //     id,
-    //     status: newStatus,
-    //   },
-    // });
+    dispatch({ type: "CHANGE_STATUS", payload: { id, status: newStatus } });
   }
 
   function saveEdit(company) {
-    // TODO: call API to edit
-    // dispatch({
-    //   type: "EDIT_COMPANY",
-    //   payload: company,
-    // });
-
+    dispatch({ type: "EDIT_COMPANY", payload: company });
     setEditingId(null);
   }
 
