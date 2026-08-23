@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../utils/api";
 
 const inputClass =
   "w-full bg-bg border border-border rounded px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
@@ -8,12 +9,24 @@ const buttonClass =
   "w-full px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    const res = await apiFetch("/users/register", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      navigate("/login");
+    } else {
+      setError(data.error);
+    }
   }
 
   return (
@@ -31,6 +44,17 @@ function Register() {
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-text-muted text-xs font-mono">Name</label>
+            <input
+              className={inputClass}
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
           <div className="flex flex-col gap-1">
             <label className="text-text-muted text-xs font-mono">Email</label>
             <input

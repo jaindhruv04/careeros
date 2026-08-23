@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import { apiFetch } from "../utils/api";
 
 const inputClass =
   "w-full bg-bg border border-border rounded px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
@@ -11,11 +13,22 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    const res = await apiFetch("/users/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem("token", data.token);
+      navigate("/");
+    } else {
+      setError(data.error);
+    }
   }
-
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
