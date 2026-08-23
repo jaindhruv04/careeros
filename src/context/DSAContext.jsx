@@ -1,66 +1,59 @@
-import { createContext, useReducer, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
+import { apiFetch } from "../utils/api";
 
 export const DSAContext = createContext();
 
-function dsaReducer(state, action) {
-  switch (action.type) {
-    case "ADD_DSA":
-      return [...state, action.payload];
-
-    case "DELETE_DSA":
-      return state.filter((problem) => problem.id !== action.payload);
-
-    case "EDIT_DSA":
-      return state.map((problem) =>
-        problem.id === action.payload.id
-          ? { ...problem, ...action.payload }
-          : problem
-      );
-
-    case "CHANGE_STATUS":
-      return state.map((problem) =>
-        problem.id === action.payload.id
-          ? { ...problem, status: action.payload.status }
-          : problem
-      );
-
-    case "ARCHIVE_DSA":
-      return state.map((problem) =>
-        problem.id === action.payload
-          ? { ...problem, archived: true }
-          : problem
-      );
-
-    case "RESTORE_DSA":
-      return state.map((problem) =>
-        problem.id === action.payload
-          ? { ...problem, archived: false }
-          : problem
-      );
-
-    default:
-      return state;
-  }
-}
-
 export function DSAProvider({ children }) {
-  const storedDSATopics =
-    JSON.parse(localStorage.getItem("dsaTopics")) || [];
+  const [dsaTopics, setDsaTopics] = useState([]);
 
-  const [dsaTopics, dispatch] = useReducer(
-    dsaReducer,
-    storedDSATopics
-  );
+  async function fetchProblems() {
+    const res = await apiFetch("/dsa");
+    if (res.ok) {
+      const data = await res.json();
+      setDsaTopics(data);
+    }
+  }
 
   useEffect(() => {
-    localStorage.setItem(
-      "dsaTopics",
-      JSON.stringify(dsaTopics)
-    );
-  }, [dsaTopics]);
+    fetchProblems();
+  }, []);
+
+  async function addProblem(problemData) {
+    const res = await apiFetch("/dsa", {
+      method: "POST",
+      body: JSON.stringify(problemData),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setDsaTopics((prev) => {
+        return [...prev, data.problem];
+      });
+    }
+  }
+
+  async function updateProblem(id, updates) {
+    const res = await apiFetch(`/dsa/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    if (res.ok) {
+      await fetchProblems();
+    }
+  }
+
+  async function deleteProblem(id) {
+    const res = await apiFetch(`/dsa/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      await fetchProblems();
+    }
+  }
 
   return (
-    <DSAContext.Provider value={{ dsaTopics, dispatch }}>
+    <DSAContext.Provider
+      value={{ dsaTopics, addProblem, updateProblem, deleteProblem }}
+    >
       {children}
     </DSAContext.Provider>
   );

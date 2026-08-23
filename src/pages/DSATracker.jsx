@@ -14,7 +14,7 @@ const buttonClass =
   "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function DSATracker() {
-  const { dsaTopics, dispatch } = useContext(DSAContext);
+  const { dsaTopics, addProblem, deleteProblem, updateProblem } = useContext(DSAContext);
 
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("");
@@ -47,10 +47,7 @@ function DSATracker() {
       archived: false,
     };
 
-    dispatch({
-      type: "ADD_DSA",
-      payload: newDsaTopic,
-    });
+    addProblem(newDsaTopic);
 
     setName("");
     setTopic("");
@@ -62,42 +59,23 @@ function DSATracker() {
   }
 
   function deleteDSA(id) {
-    dispatch({
-      type: "DELETE_DSA",
-      payload: id,
-    });
+    deleteProblem(id);
   }
 
   function archiveDSA(id) {
-    dispatch({
-      type: "ARCHIVE_DSA",
-      payload: id,
-    });
+    updateProblem(id, { archived: true });
   }
 
   function restoreDSA(id) {
-    dispatch({
-      type: "RESTORE_DSA",
-      payload: id,
-    });
+    updateProblem(id, { archived: false });
   }
 
   function changeStatus(id, status) {
-    dispatch({
-      type: "CHANGE_STATUS",
-      payload: {
-        id,
-        status,
-      },
-    });
+    updateProblem(id, { status });
   }
 
   function saveEdit(problem) {
-    dispatch({
-      type: "EDIT_DSA",
-      payload: problem,
-    });
-
+    updateProblem(problem.id, problem);
     setEditingId(null);
   }
 
@@ -280,7 +258,7 @@ function DSATracker() {
               </p>
 
               <p className="text-sm text-text-muted mb-2">
-                Added: {problem.dateAdded}
+                Added: {problem.createdAt ? new Date(problem.createdAt).toLocaleDateString() : ""}
               </p>
 
               {problem.notes?.trim() !== "" && (
