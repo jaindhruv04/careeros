@@ -47,7 +47,7 @@ async function loginUser(req, res) {
       return res.status(401).send("Invalid Email or Password");
     }
   } catch (error) {
-    return res.status(401).send("Something Went Wrong");
+    return res.status(401).json({ error: error.message });
   }
 }
 
