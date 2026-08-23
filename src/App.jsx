@@ -7,6 +7,7 @@ import InterviewJournal from "./pages/InterviewJournal.jsx";
 import ProjectTracker from "./pages/ProjectTracker.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 import { CompanyProvider } from "./context/CompanyContext";
 import { DSAProvider } from "./context/DSAContext";
@@ -23,11 +24,46 @@ function App() {
               <Navbar />
               <main className="flex-1 px-10 py-8">
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/companies" element={<CompanyTracker />} />
-                  <Route path="/dsa" element={<DSATracker />} />
-                  <Route path="/interviews" element={<InterviewJournal />} />
-                  <Route path="/projects" element={<ProjectTracker />} />
+                  <Route
+                    path="/"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/companies"
+                    element={
+                      <ProtectedRoute>
+                        <CompanyTracker />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/dsa"
+                    element={
+                      <ProtectedRoute>
+                        <DSATracker />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/interviews"
+                    element={
+                      <ProtectedRoute>
+                        <InterviewJournal />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/projects"
+                    element={
+                      <ProtectedRoute>
+                        <ProjectTracker />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                 </Routes>
