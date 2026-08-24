@@ -2,10 +2,13 @@ import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
 };
 
 async function registerUser(req, res) {
@@ -58,9 +61,9 @@ async function loginUser(req, res) {
       });
 
       return res.status(200).json({ message: "Login successful" });
-    } else {
-      return res.status(401).json({ error: "Invalid Email or Password" });
     }
+
+    return res.status(401).json({ error: "Invalid Email or Password" });
   } catch (error) {
     return res.status(401).json({ error: error.message });
   }
