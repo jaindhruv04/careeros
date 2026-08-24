@@ -13,19 +13,41 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const res = await apiFetch("/users/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (res.ok) {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const res = await apiFetch("/users/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Unable to sign in");
+        return;
+      }
+
+      // Verify that the authentication cookie can actually be used
+      // before navigating into the protected application.
+      const sessionRes = await apiFetch("/users/me");
+
+      if (!sessionRes.ok) {
+        setError("Login succeeded, but your session could not be verified. Please try again.");
+        return;
+      }
+
       navigate("/");
-    } else {
-      setError(data.error);
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -52,6 +74,7 @@ function Login() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
             />
           </div>
 
@@ -65,11 +88,12 @@ function Login() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
 
-          <button type="submit" className={buttonClass}>
-            Sign in
+          <button type="submit" className={buttonClass} disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
