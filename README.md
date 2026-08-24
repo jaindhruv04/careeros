@@ -154,8 +154,8 @@ The frontend API URL is configured through the `VITE_API_URL` environment variab
 
 CareerOS is deployed using Render.
 
-- Frontend: `https://careersos-dwui.onrender.com`
-- Backend API: `https://careersos-api-0zqj.onrender.com`
+- Frontend: `https://careeros-dwui.onrender.com`
+- Backend API: `https://careeros-api-0zqj.onrender.com`
 
 The frontend uses the root Vite base path (`/`) and standard `BrowserRouter` routing, so it is not tied to the old GitHub Pages `/careeros/` path.
 
