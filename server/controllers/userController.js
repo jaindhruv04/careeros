@@ -2,14 +2,16 @@ import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const isProduction = process.env.NODE_ENV === "production";
+function getCookieOptions(req) {
+  const isSecure = req.headers["x-forwarded-proto"] === "https" || req.secure;
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
-  path: "/",
-};
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? "none" : "lax",
+    path: "/",
+  };
+}
 
 async function registerUser(req, res) {
   try {
@@ -56,7 +58,7 @@ async function loginUser(req, res) {
       });
 
       res.cookie("token", token, {
-        ...cookieOptions,
+        ...getCookieOptions(req),
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
@@ -81,7 +83,7 @@ async function getAllUsers(req, res) {
 }
 
 function logoutUser(req, res) {
-  res.clearCookie("token", cookieOptions);
+  res.clearCookie("token", getCookieOptions(req));
   return res.status(200).json({ message: "Logged out" });
 }
 
