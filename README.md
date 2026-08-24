@@ -2,7 +2,9 @@
 
 A unified placement-preparation dashboard built with React. CareerOS helps students track DSA practice, company applications, interview notes, personal projects, and daily goals in one place.
 
-**Live frontend demo:** https://jaindhruv04.github.io/careeros/
+**Live frontend:** https://careeros-dwui.onrender.com
+
+**Backend API:** https://careeros-api-0zqj.onrender.com
 
 ---
 
@@ -11,8 +13,6 @@ A unified placement-preparation dashboard built with React. CareerOS helps stude
 Students preparing for placements often use separate tools for DSA tracking, company applications, interview notes, project planning, and daily goals. CareerOS brings these workflows into one focused dashboard.
 
 The Dashboard aggregates live data from every tracker, including high-priority items, progress rates, recent activity, and quick insights. The project was built incrementally while learning React fundamentals, with every feature implemented after understanding the underlying concept.
-
----
 
 ## Features
 
@@ -52,15 +52,12 @@ The Dashboard aggregates live data from every tracker, including high-priority i
 - Store progress percentage and technology stack
 - Manage project status and priority
 - Edit, archive, restore, and delete entries
-- Search and filter entries
 
 ### Browser Persistence
 
 - Company, DSA, interview, and project data is saved in browser `localStorage`
 - Tracker data remains available after refreshing or reopening the browser
 - Daily goals are currently session-based and reset after a refresh
-
----
 
 ## Tech Stack
 
@@ -70,9 +67,9 @@ The Dashboard aggregates live data from every tracker, including high-priority i
 - React Router
 - Context API
 - Browser `localStorage`
-- GitHub Pages
-
----
+- Node.js / Express backend
+- Prisma / PostgreSQL
+- Render
 
 ## React Concepts Used
 
@@ -91,8 +88,6 @@ The Dashboard aggregates live data from every tracker, including high-priority i
 - Immutable state updates
 - Object and array spreading
 - Local persistence with `localStorage`
-
----
 
 ## Data Flow and Persistence
 
@@ -116,90 +111,64 @@ localStorage updates
 
 When the application starts, previously saved tracker data is loaded back into React automatically.
 
----
-
 ## Project Structure
 
 ```text
 src/
 │
 ├── components/
-│   ├── EditCompanyForm.jsx
-│   ├── EditDSAForm.jsx
-│   ├── EditInterviewForm.jsx
-│   ├── EditProjectForm.jsx
-│   ├── ModuleHeader.jsx
-│   ├── Navbar.jsx
-│   └── PriorityBadge.jsx
-│
 ├── context/
-│   ├── CompanyContext.jsx
-│   ├── DSAContext.jsx
-│   ├── InterviewContext.jsx
-│   └── ProjectContext.jsx
-│
 ├── pages/
-│   ├── Dashboard.jsx
-│   ├── CompanyTracker.jsx
-│   ├── DSATracker.jsx
-│   ├── InterviewJournal.jsx
-│   └── ProjectTracker.jsx
-│
 ├── utils/
-│   ├── dashboardUtils.js
-│   └── dateUtils.js
-│
 ├── App.jsx
 └── main.jsx
-```
 
----
+server/
+├── controllers/
+├── middleware/
+├── prisma/
+├── routes/
+└── app.js
+```
 
 ## Getting Started
 
 ```bash
 git clone https://github.com/jaindhruv04/careeros.git
-
 cd careeros
-
 npm install
-
 npm run dev
 ```
 
-Open the local URL shown in the terminal.
+For the backend:
 
----
+```bash
+cd server
+npm install
+npm start
+```
+
+The frontend API URL is configured through the `VITE_API_URL` environment variable. The backend accepts its frontend origin through `CLIENT_ORIGIN`.
 
 ## Deployment
 
-The frontend is deployed using GitHub Pages.
+CareerOS is deployed using Render.
 
-Routing is configured using:
+- Frontend: `https://careersos-dwui.onrender.com`
+- Backend API: `https://careersos-api-0zqj.onrender.com`
 
-- `base: "/careeros/"` in `vite.config.js`
-- `basename="/careeros"` in `BrowserRouter`
-- `404.html` redirect support for page refreshes
-
----
+The frontend uses the root Vite base path (`/`) and standard `BrowserRouter` routing, so it is not tied to the old GitHub Pages `/careeros/` path.
 
 ## Future Improvements
 
-- Full-stack backend with Node.js and Express
-- PostgreSQL database with Prisma ORM
-- User authentication and protected routes
-- Form validation with React Hook Form and Zod
-- Cloud deployment for frontend, API, and database
 - Persistent daily goals
 - Responsive mobile improvements
 - Export and import data
 - Analytics dashboard
 
----
-
 ## Author
 
-**Dhruv Jain**
+**Dhruv Jain**  
 B.Tech Information Technology  
 BPIT, GGSIPU Delhi
 
