@@ -19,3 +19,41 @@ body {
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
+
+@media (max-width: 767px) {
+  main {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  main input,
+  main select,
+  main textarea,
+  main button {
+    max-width: 100%;
+  }
+
+  main form {
+    min-width: 0;
+  }
+
+  main textarea {
+    width: 100%;
+  }
+
+  main .max-w-4xl {
+    width: 100%;
+    max-width: none;
+  }
+
+  main ul,
+  main li,
+  main p {
+    min-width: 0;
+  }
+
+  main p,
+  main li {
+    overflow-wrap: anywhere;
+  }
+}
