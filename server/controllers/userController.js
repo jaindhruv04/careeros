@@ -2,6 +2,12 @@ import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+};
+
 async function registerUser(req, res) {
   try {
     const { email, name, password } = req.body;
@@ -22,9 +28,12 @@ async function registerUser(req, res) {
       },
     });
 
-    return res.status(201).json({ message: "User Created Successfully", user });
+    return res.status(201).json({
+      message: "User Created Successfully",
+      user: { id: user.id, email: user.email, name: user.name },
+    });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    return res.status(400).json({ error: error.message });
   }
 }
 
@@ -35,16 +44,22 @@ async function loginUser(req, res) {
     const checkUser = await prisma.user.findUnique({ where: { email } });
 
     if (!checkUser) {
-      return res.status(401).send("Invalid Email or Password");
+      return res.status(401).json({ error: "Invalid Email or Password" });
     }
 
     if (await bcrypt.compare(password, checkUser.password)) {
       const token = jwt.sign({ userId: checkUser.id }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
-      return res.status(200).json({ message: "Login successful", token });
+
+      res.cookie("token", token, {
+        ...cookieOptions,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return res.status(200).json({ message: "Login successful" });
     } else {
-      return res.status(401).send("Invalid Email or Password");
+      return res.status(401).json({ error: "Invalid Email or Password" });
     }
   } catch (error) {
     return res.status(401).json({ error: error.message });
@@ -53,11 +68,31 @@ async function loginUser(req, res) {
 
 async function getAllUsers(req, res) {
   try {
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, createdAt: true },
+    });
     return res.status(200).json({ users });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 }
 
-export { registerUser, getAllUsers, loginUser };
+function logoutUser(req, res) {
+  res.clearCookie("token", cookieOptions);
+  return res.status(200).json({ message: "Logged out" });
+}
+
+async function getCurrentUser(req, res) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { id: true, email: true, name: true },
+    });
+
+    return res.status(200).json({ user });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
+export { registerUser, getAllUsers, loginUser, logoutUser, getCurrentUser };

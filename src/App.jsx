@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Outlet, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import CompanyTracker from "./pages/CompanyTracker.jsx";
@@ -14,7 +14,7 @@ import { DSAProvider } from "./context/DSAContext";
 import { InterviewProvider } from "./context/InterviewContext";
 import { ProjectProvider } from "./context/ProjectContext";
 
-function App() {
+function AuthenticatedLayout() {
   return (
     <CompanyProvider>
       <DSAProvider>
@@ -23,56 +23,35 @@ function App() {
             <div className="flex min-h-screen bg-bg">
               <Navbar />
               <main className="flex-1 px-10 py-8">
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/companies"
-                    element={
-                      <ProtectedRoute>
-                        <CompanyTracker />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dsa"
-                    element={
-                      <ProtectedRoute>
-                        <DSATracker />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/interviews"
-                    element={
-                      <ProtectedRoute>
-                        <InterviewJournal />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/projects"
-                    element={
-                      <ProtectedRoute>
-                        <ProjectTracker />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                </Routes>
+                <Outlet />
               </main>
             </div>
           </ProjectProvider>
         </InterviewProvider>
       </DSAProvider>
     </CompanyProvider>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/companies" element={<CompanyTracker />} />
+        <Route path="/dsa" element={<DSATracker />} />
+        <Route path="/interviews" element={<InterviewJournal />} />
+        <Route path="/projects" element={<ProjectTracker />} />
+      </Route>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+    </Routes>
   );
 }
 
