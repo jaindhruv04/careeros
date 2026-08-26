@@ -26,8 +26,8 @@ async function registerUser(req, res) {
       message: "User Created Successfully",
       user: { id: user.id, email: user.email, name: user.name },
     });
-  } catch (error) {
-    return res.status(400).json({ error: error.message });
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
@@ -50,19 +50,8 @@ async function loginUser(req, res) {
     }
 
     return res.status(401).json({ error: "Invalid Email or Password" });
-  } catch (error) {
-    return res.status(401).json({ error: error.message });
-  }
-}
-
-async function getAllUsers(req, res) {
-  try {
-    const users = await prisma.user.findMany({
-      select: { id: true, email: true, name: true, createdAt: true },
-    });
-    return res.status(200).json({ users });
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
@@ -78,9 +67,9 @@ async function getCurrentUser(req, res) {
     });
 
     return res.status(200).json({ user });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
-export { registerUser, getAllUsers, loginUser, logoutUser, getCurrentUser };
+export { registerUser, loginUser, logoutUser, getCurrentUser };

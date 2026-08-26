@@ -12,5 +12,13 @@ export async function apiFetch(path, options = {}) {
     },
   });
 
+  if (res.status === 401 && token) {
+    localStorage.removeItem("token");
+
+    if (window.location.pathname !== "/login") {
+      window.location.replace("/login");
+    }
+  }
+
   return res;
 }

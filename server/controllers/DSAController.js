@@ -1,5 +1,10 @@
 import { prisma } from "../lib/prisma.js";
 
+function getProblemId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 async function createProblem(req, res) {
   try {
     const {
@@ -28,8 +33,8 @@ async function createProblem(req, res) {
     });
 
     return res.status(201).json({ message: "Problem added", problem });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
@@ -39,45 +44,100 @@ async function getAllProblems(req, res) {
       where: { userId: req.userId },
     });
 
-    res.json(problems);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.json(problems);
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
 async function getProblem(req, res) {
-  const id = req.params.id;
+  const id = getProblemId(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: "Invalid problem ID" });
+  }
+
   try {
-    const problem = await prisma.dSAProblem.findUnique({
-      where: { id: Number(id) },
+    const problem = await prisma.dSAProblem.findFirst({
+      where: { id, userId: req.userId },
     });
 
-    res.json(problem);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (!problem) {
+      return res.status(404).json({ error: "Problem not found" });
+    }
+
+    return res.json(problem);
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
 async function updateProblem(req, res) {
-  const id = Number(req.params.id);
+  const id = getProblemId(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: "Invalid problem ID" });
+  }
+
+  const {
+    name,
+    topic,
+    difficulty,
+    status,
+    priority,
+    revisionNeeded,
+    notes,
+    archived,
+  } = req.body;
+
   try {
+    const existingProblem = await prisma.dSAProblem.findFirst({
+      where: { id, userId: req.userId },
+    });
+
+    if (!existingProblem) {
+      return res.status(404).json({ error: "Problem not found" });
+    }
+
     const problem = await prisma.dSAProblem.update({
       where: { id },
-      data: req.body,
+      data: {
+        name,
+        topic,
+        difficulty,
+        status,
+        priority,
+        revisionNeeded,
+        notes,
+        archived,
+      },
     });
-    res.status(200).json(problem);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    return res.status(200).json(problem);
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
 async function deleteProblem(req, res) {
-  const id = Number(req.params.id);
+  const id = getProblemId(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({ error: "Invalid problem ID" });
+  }
+
   try {
-    let deletedProblem = await prisma.dSAProblem.delete({ where: { id } });
-    res.status(200).send("Problem Deleted", deleteProblem);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const deletedProblem = await prisma.dSAProblem.deleteMany({
+      where: { id, userId: req.userId },
+    });
+
+    if (deletedProblem.count === 0) {
+      return res.status(404).json({ error: "Problem not found" });
+    }
+
+    return res.status(200).json({ message: "Problem deleted" });
+  } catch {
+    return res.status(500).json({ error: "Something went wrong" });
   }
 }
 
