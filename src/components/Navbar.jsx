@@ -16,6 +16,7 @@ function Navbar() {
     try {
       await apiFetch("/users/logout", { method: "POST" });
     } finally {
+      localStorage.removeItem("token");
       navigate("/login", { replace: true });
     }
   }

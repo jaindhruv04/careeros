@@ -34,15 +34,7 @@ function Login() {
         return;
       }
 
-      // Verify that the authentication cookie can actually be used
-      // before navigating into the protected application.
-      const sessionRes = await apiFetch("/users/me");
-
-      if (!sessionRes.ok) {
-        setError("Login succeeded, but your session could not be verified. Please try again.");
-        return;
-      }
-
+      localStorage.setItem("token", data.token);
       navigate("/");
     } catch {
       setError("Unable to connect to the server. Please try again.");

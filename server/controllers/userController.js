@@ -2,17 +2,6 @@ import { prisma } from "../lib/prisma.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-function getCookieOptions(req) {
-  const isSecure = req.headers["x-forwarded-proto"] === "https" || req.secure;
-
-  return {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: isSecure ? "none" : "lax",
-    path: "/",
-  };
-}
-
 async function registerUser(req, res) {
   try {
     const { email, name, password } = req.body;
@@ -57,12 +46,7 @@ async function loginUser(req, res) {
         expiresIn: "7d",
       });
 
-      res.cookie("token", token, {
-        ...getCookieOptions(req),
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      return res.status(200).json({ message: "Login successful" });
+      return res.status(200).json({ message: "Login successful", token });
     }
 
     return res.status(401).json({ error: "Invalid Email or Password" });
@@ -83,7 +67,6 @@ async function getAllUsers(req, res) {
 }
 
 function logoutUser(req, res) {
-  res.clearCookie("token", getCookieOptions(req));
   return res.status(200).json({ message: "Logged out" });
 }
 
