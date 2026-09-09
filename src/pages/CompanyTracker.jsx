@@ -9,7 +9,7 @@ const selectClass = inputClass;
 const buttonClass = "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function CompanyTracker() {
-  const { companies, dispatch } = useContext(CompanyContext);
+  const { companies, addCompany, updateCompany, deleteCompany } = useContext(CompanyContext);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("Applied");
@@ -23,14 +23,14 @@ function CompanyTracker() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    dispatch({ type: "ADD_COMPANY", payload: { id: Date.now(), name, role, status, applicationDate, priority, notes } });
+    addCompany({ id: Date.now(), name, role, status, applicationDate, priority, notes, archived: false });
     setName(""); setRole(""); setStatus("Applied"); setApplicationDate(""); setPriority("Medium"); setNotes("");
   }
-  function deleteCompany(id) { dispatch({ type: "DELETE_COMPANY", payload: id }); }
-  function archiveCompany(id) { dispatch({ type: "ARCHIVE_COMPANY", payload: id }); }
-  function restoreCompany(id) { dispatch({ type: "RESTORE_COMPANY", payload: id }); }
-  function changeStatus(id, newStatus) { dispatch({ type: "CHANGE_STATUS", payload: { id, status: newStatus } }); }
-  function saveEdit(company) { dispatch({ type: "EDIT_COMPANY", payload: company }); setEditingId(null); }
+  function deleteComp(id) { deleteCompany(id); }
+  function archiveCompany(id) { updateCompany(id, { archived: true }); }
+  function restoreCompany(id) { updateCompany(id, { archived: false }); }
+  function changeStatus(id, newStatus) { updateCompany(id, { status: newStatus }); }
+  function saveEdit(company) { updateCompany(company.id, company); setEditingId(null); }
 
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchText.toLowerCase());
@@ -74,12 +74,12 @@ function CompanyTracker() {
                 </div>
                 <p className="text-sm text-text-muted mb-1">Status: <span className="text-text-primary">{company.status}</span></p>
                 {company.applicationDate?.trim() && <p className="text-sm text-text-muted mb-1">Application date: {company.applicationDate}</p>}
-                {company.dateAdded && <p className="text-sm text-text-muted mb-1">Added: {company.dateAdded}</p>}
+                <p className="text-sm text-text-muted mb-1">Added: {company.createdAt ? new Date(company.createdAt).toLocaleDateString() : ""}</p>
                 {company.notes?.trim() && <p className="text-sm text-text-muted mb-3 break-words">Notes: {company.notes}</p>}
                 {company.archived && <p className="text-yellow-400 text-sm mb-3">Archived</p>}
                 <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
                   <button className={buttonClass} onClick={() => setEditingId(company.id)}>Edit</button>
-                  <button className={buttonClass} onClick={() => deleteCompany(company.id)}>Delete</button>
+                  <button className={buttonClass} onClick={() => deleteComp(company.id)}>Delete</button>
                   <select className={selectClass} value={company.status} onChange={(e) => changeStatus(company.id, e.target.value)}><option value="Applied">Applied</option><option value="Interviewing">Interviewing</option><option value="Offer">Offer</option><option value="Rejected">Rejected</option></select>
                   {!company.archived ? <button className={buttonClass} onClick={() => archiveCompany(company.id)}>Archive</button> : <button className={buttonClass} onClick={() => restoreCompany(company.id)}>Restore</button>}
                 </div>

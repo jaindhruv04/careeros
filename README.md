@@ -53,10 +53,11 @@ The Dashboard aggregates live data from every tracker, including high-priority i
 - Manage project status and priority
 - Edit, archive, restore, and delete entries
 
-### Browser Persistence
+### Data Persistence
 
-- Company, DSA, interview, and project data is saved in browser `localStorage`
-- Tracker data remains available after refreshing or reopening the browser
+- Company and DSA data is stored in PostgreSQL database via backend API
+- Interview and project data is saved in browser `localStorage`
+- All data is user-specific and requires authentication
 - Daily goals are currently session-based and reset after a refresh
 
 ## Tech Stack
@@ -91,7 +92,27 @@ The Dashboard aggregates live data from every tracker, including high-priority i
 
 ## Data Flow and Persistence
 
-Each tracker has its own Context Provider.
+**Backend-integrated trackers (Company, DSA):**
+
+State is managed using `useState` and synchronized with PostgreSQL database through REST API.
+
+```text
+User action
+    ↓
+async function call
+    ↓
+API request (with JWT auth)
+    ↓
+Backend updates database
+    ↓
+Response returns
+    ↓
+React state updates
+    ↓
+React re-renders
+```
+
+**Client-only trackers (Interview, Project):**
 
 State is managed using `useReducer` and synchronized with browser `localStorage` using `useEffect`.
 
@@ -109,7 +130,7 @@ useEffect runs
 localStorage updates
 ```
 
-When the application starts, previously saved tracker data is loaded back into React automatically.
+When the application starts, authentication is checked, and backend data is fetched automatically. Client-only tracker data is loaded from localStorage.
 
 ## Project Structure
 
@@ -161,6 +182,7 @@ The frontend uses the root Vite base path (`/`) and standard `BrowserRouter` rou
 
 ## Future Improvements
 
+- Migrate Interview and Project trackers to backend
 - Persistent daily goals
 - Responsive mobile improvements
 - Export and import data

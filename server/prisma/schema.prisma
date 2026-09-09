@@ -13,6 +13,7 @@ model User {
   password    String
   createdAt   DateTime     @default(now())
   dsaproblems DSAProblem[]
+  companies   Company[]
 }
 
 model DSAProblem {
@@ -29,4 +30,19 @@ model DSAProblem {
   updatedAt      DateTime @updatedAt
   userId         Int
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id              Int      @id @default(autoincrement())
+  name            String
+  role            String
+  status          String
+  applicationDate String?
+  priority        String
+  notes           String?
+  archived        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
