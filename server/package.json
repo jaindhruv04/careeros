@@ -26,6 +26,6 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
-    "groq-sdk": "^0.34.0"
+    "groq-sdk": "^1.6.0"
   }
 }
