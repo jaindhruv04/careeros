@@ -8,6 +8,7 @@ import ProjectTracker from "./pages/ProjectTracker.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AIChat from "./components/AIChat.jsx";
 
 import { CompanyProvider } from "./context/CompanyContext";
 import { DSAProvider } from "./context/DSAContext";
@@ -25,6 +26,7 @@ function AuthenticatedLayout() {
               <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-24 md:px-8 md:pb-8 lg:px-10">
                 <Outlet />
               </main>
+              <AIChat />
             </div>
           </ProjectProvider>
         </InterviewProvider>
