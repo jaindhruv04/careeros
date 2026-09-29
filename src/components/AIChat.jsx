@@ -13,14 +13,24 @@ function AIChat() {
     const trimmed = message.trim();
     if (!trimmed || loading) return;
 
-    setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+    const userMessage = {
+      role: "user",
+      content: trimmed,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
     setMessage("");
     setLoading(true);
 
     try {
+      const conversation = [...messages, userMessage];
+
       const res = await apiFetch("/ai/chat", {
         method: "POST",
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({
+          message: trimmed,
+          history: conversation,
+        }),
       });
 
       const data = await res.json();
@@ -29,7 +39,13 @@ function AIChat() {
         throw new Error(data.error || "Unable to get an AI response");
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.reply,
+        },
+      ]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -49,9 +65,14 @@ function AIChat() {
         <div className="fixed bottom-20 right-4 z-[60] flex w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-2xl md:bottom-6 md:right-6">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div>
-              <p className="font-mono text-sm tracking-wide text-text-primary">CareerOS AI</p>
-              <p className="text-xs text-text-muted">Placement-prep assistant</p>
+              <p className="font-mono text-sm tracking-wide text-text-primary">
+                CareerOS AI
+              </p>
+              <p className="text-xs text-text-muted">
+                Placement-prep assistant
+              </p>
             </div>
+
             <button
               onClick={() => setIsOpen(false)}
               className="text-text-muted transition-colors hover:text-text-primary"
@@ -64,7 +85,8 @@ function AIChat() {
           <div className="flex h-80 flex-col gap-3 overflow-y-auto p-4">
             {messages.length === 0 ? (
               <p className="text-sm leading-6 text-text-muted">
-                Ask about DSA, interviews, projects, resumes, or placement preparation.
+                Ask about DSA, interviews, projects, resumes, or placement
+                preparation.
               </p>
             ) : (
               messages.map((item, index) => (
@@ -96,6 +118,7 @@ function AIChat() {
                 placeholder="Ask CareerOS AI..."
                 className="min-w-0 flex-1 rounded border border-border bg-bg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent"
               />
+
               <button
                 type="submit"
                 disabled={loading || !message.trim()}
