@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+scripts/analytics.py
+scripts/requirements.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

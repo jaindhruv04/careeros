@@ -5,6 +5,7 @@ import userRouter from "./routes/userRouter.js";
 import dsaRouter from "./routes/DSARouter.js";
 import companyRouter from "./routes/companyRouter.js";
 import aiRouter from "./routes/aiRouter.js";
+import analyticsRouter from "./routes/analyticsRouter.js";
 
 const app = express();
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use("/users", userRouter);
 app.use("/dsa", dsaRouter);
 app.use("/companies", companyRouter);
 app.use("/ai", aiRouter);
+app.use("/analytics", analyticsRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT);

@@ -5,6 +5,7 @@ import CompanyTracker from "./pages/CompanyTracker.jsx";
 import DSATracker from "./pages/DSATracker.jsx";
 import InterviewJournal from "./pages/InterviewJournal.jsx";
 import ProjectTracker from "./pages/ProjectTracker.jsx";
+import Analytics from "./pages/Analytics.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -50,6 +51,7 @@ function App() {
         <Route path="/dsa" element={<DSATracker />} />
         <Route path="/interviews" element={<InterviewJournal />} />
         <Route path="/projects" element={<ProjectTracker />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />

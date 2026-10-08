@@ -7,6 +7,7 @@ const links = [
   { to: "/dsa", label: "DSA", short: "DSA" },
   { to: "/interviews", label: "Interviews", short: "Interviews" },
   { to: "/projects", label: "Projects", short: "Projects" },
+  { to: "/analytics", label: "Analytics", short: "Analytics" },
 ];
 
 function Navbar() {
