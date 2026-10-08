@@ -22,12 +22,27 @@ The project is being built incrementally while learning full-stack development, 
 
 ### Dashboard
 
-- Overall statistics across all trackers
+- Overall statistics across placement-preparation trackers
 - High-priority task triage
-- Progress summaries with visual progress bars
+- Progress summaries
 - Recent activity feed
 - Quick insights
 - Session-based daily goals checklist
+
+### Analytics
+
+Backend-generated analytics for persisted DSA and company/application data:
+
+- Total and solved DSA problems
+- Overall solve rate
+- Difficulty distribution and solve rate by difficulty
+- Weak and strong DSA topics
+- Revision workload
+- 7-day and 30-day activity
+- Application status and priority distribution
+- Interview and offer conversion
+- Recent application activity
+- Placement-preparation insights and recommendations
 
 ### Company Tracker
 
@@ -117,7 +132,7 @@ The backend supports multiple tool-call rounds with a maximum iteration limit, a
 
 ### Backend-integrated trackers
 
-Company and DSA data is stored in PostgreSQL through the Express backend and Prisma ORM.
+Company and DSA data is stored in PostgreSQL through the Express backend and Prisma ORM. Analytics also reads these persisted records from the backend.
 
 ```text
 User action / AI action
@@ -480,21 +495,9 @@ The PostgreSQL database is hosted using Supabase.
 
 ---
 
-## Current AI Roadmap
+## AI Roadmap
 
-### Completed
-
-- AI chat interface
-- Groq integration
-- Authenticated AI requests
-- Company data read tool
-- DSA data read tool
-- DSA creation tool
-- DSA deletion tool
-- Multi-round tool execution
-- User-scoped database operations
-
-### Planned
+### Next AI improvements
 
 - Update DSA problems through AI
 - Create company applications through AI
@@ -502,12 +505,9 @@ The PostgreSQL database is hosted using Supabase.
 - Delete companies through AI
 - Confirmation system for destructive operations
 - Safer bulk operations
-- CareerOS statistics tool
+- CareerOS statistics and analytics tools
 - AI-generated placement insights
 - Interview and project data integration
-- Persistent daily goals
-- Analytics dashboard
-- Export and import data
 
 ---
 
@@ -525,13 +525,13 @@ The PostgreSQL database is hosted using Supabase.
 
 - Migrate Interview and Project trackers to the backend
 - Persistent daily goals
-- AI-powered placement analytics
+- Migrate Interview and Project trackers to PostgreSQL
+- Persist daily goals
 - AI-generated DSA progress reports
 - Application follow-up recommendations
 - Interview preparation insights
 - Responsive mobile improvements
 - Export and import data
-- Analytics dashboard
 - Improved frontend synchronization after AI-triggered mutations
 
 ---
