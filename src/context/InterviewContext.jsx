@@ -1,66 +1,57 @@
-import { createContext, useReducer, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
+import { apiFetch } from "../utils/api";
 
 export const InterviewContext = createContext();
 
-function interviewReducer(state, action) {
-  switch (action.type) {
-    case "ADD_INTERVIEW":
-      return [...state, action.payload];
-
-    case "DELETE_INTERVIEW":
-      return state.filter((entry) => entry.id !== action.payload);
-
-    case "EDIT_INTERVIEW":
-      return state.map((entry) =>
-        entry.id === action.payload.id
-          ? { ...entry, ...action.payload }
-          : entry
-      );
-
-    case "CHANGE_PRIORITY":
-      return state.map((entry) =>
-        entry.id === action.payload.id
-          ? { ...entry, priority: action.payload.priority }
-          : entry
-      );
-
-    case "ARCHIVE_INTERVIEW":
-      return state.map((entry) =>
-        entry.id === action.payload
-          ? { ...entry, archived: true }
-          : entry
-      );
-
-    case "RESTORE_INTERVIEW":
-      return state.map((entry) =>
-        entry.id === action.payload
-          ? { ...entry, archived: false }
-          : entry
-      );
-
-    default:
-      return state;
-  }
-}
-
 export function InterviewProvider({ children }) {
-  const storedInterviewEntries =
-    JSON.parse(localStorage.getItem("interviewEntries")) || [];
+  const [interviewEntries, setInterviewEntries] = useState([]);
 
-  const [interviewEntries, dispatch] = useReducer(
-    interviewReducer,
-    storedInterviewEntries
-  );
+  async function fetchEntries() {
+    const res = await apiFetch("/interviews");
+    if (res.ok) {
+      const data = await res.json();
+      setInterviewEntries(data);
+    }
+  }
 
   useEffect(() => {
-    localStorage.setItem(
-      "interviewEntries",
-      JSON.stringify(interviewEntries)
-    );
-  }, [interviewEntries]);
+    fetchEntries();
+  }, []);
+
+  async function addEntry(entryData) {
+    const res = await apiFetch("/interviews", {
+      method: "POST",
+      body: JSON.stringify(entryData),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setInterviewEntries((prev) => [data.entry, ...prev]);
+    }
+  }
+
+  async function updateEntry(id, updates) {
+    const res = await apiFetch(`/interviews/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    if (res.ok) {
+      await fetchEntries();
+    }
+  }
+
+  async function deleteEntry(id) {
+    const res = await apiFetch(`/interviews/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setInterviewEntries((prev) => prev.filter((e) => e.id !== id));
+    }
+  }
 
   return (
-    <InterviewContext.Provider value={{ interviewEntries, dispatch }}>
+    <InterviewContext.Provider
+      value={{ interviewEntries, addEntry, updateEntry, deleteEntry }}
+    >
       {children}
     </InterviewContext.Provider>
   );

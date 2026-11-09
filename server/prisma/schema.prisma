@@ -7,13 +7,15 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  email       String       @unique
-  name        String?
-  password    String
-  createdAt   DateTime     @default(now())
-  dsaproblems DSAProblem[]
-  companies   Company[]
+  id               Int              @id @default(autoincrement())
+  email            String           @unique
+  name             String?
+  password         String
+  createdAt        DateTime         @default(now())
+  dsaproblems      DSAProblem[]
+  companies        Company[]
+  projects         Project[]
+  interviewEntries InterviewEntry[]
 }
 
 model DSAProblem {
@@ -38,6 +40,38 @@ model Company {
   role            String
   status          String
   applicationDate String?
+  priority        String
+  notes           String?
+  archived        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  name      String
+  techStack String
+  progress  Int      @default(0)
+  status    String
+  priority  String
+  notes     String?
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model InterviewEntry {
+  id              Int      @id @default(autoincrement())
+  company         String
+  round           String
+  questionsAsked  String?
+  myAnswer        String?
+  mistakes        String?
+  lessonsLearned  String?
   priority        String
   notes           String?
   archived        Boolean  @default(false)

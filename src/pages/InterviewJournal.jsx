@@ -1,6 +1,5 @@
 import { useState, useContext } from "react";
 import { InterviewContext } from "../context/InterviewContext";
-import { getDateAdded } from "../utils/dateUtils";
 import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import EditInterviewForm from "../components/EditInterviewForm";
@@ -15,7 +14,8 @@ const buttonClass =
   "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function InterviewJournal() {
-  const { interviewEntries, dispatch } = useContext(InterviewContext);
+  const { interviewEntries, addEntry, updateEntry, deleteEntry } =
+    useContext(InterviewContext);
 
   const [company, setCompany] = useState("");
   const [round, setRound] = useState("");
@@ -35,8 +35,7 @@ function InterviewJournal() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    const interviewEntry = {
-      id: Date.now(),
+    addEntry({
       company,
       round,
       questionsAsked,
@@ -44,14 +43,8 @@ function InterviewJournal() {
       mistakes,
       lessonsLearned,
       priority,
-      dateAdded: getDateAdded(),
       notes,
       archived: false,
-    };
-
-    dispatch({
-      type: "ADD_INTERVIEW",
-      payload: interviewEntry,
     });
 
     setCompany("");
@@ -64,43 +57,33 @@ function InterviewJournal() {
     setNotes("");
   }
 
-  function deleteInterview(id) {
-    dispatch({
-      type: "DELETE_INTERVIEW",
-      payload: id,
-    });
+  function handleDelete(id) {
+    deleteEntry(id);
   }
 
-  function archiveInterview(id) {
-    dispatch({
-      type: "ARCHIVE_INTERVIEW",
-      payload: id,
-    });
+  function handleArchive(id) {
+    updateEntry(id, { archived: true });
   }
 
-  function restoreInterview(id) {
-    dispatch({
-      type: "RESTORE_INTERVIEW",
-      payload: id,
-    });
+  function handleRestore(id) {
+    updateEntry(id, { archived: false });
   }
 
-  function changePriority(id, priority) {
-    dispatch({
-      type: "CHANGE_PRIORITY",
-      payload: {
-        id,
-        priority,
-      },
-    });
+  function handleChangePriority(id, newPriority) {
+    updateEntry(id, { priority: newPriority });
   }
 
-  function saveEdit(entry) {
-    dispatch({
-      type: "EDIT_INTERVIEW",
-      payload: entry,
+  function handleSaveEdit(entry) {
+    updateEntry(entry.id, {
+      company: entry.company,
+      round: entry.round,
+      questionsAsked: entry.questionsAsked,
+      myAnswer: entry.myAnswer,
+      mistakes: entry.mistakes,
+      lessonsLearned: entry.lessonsLearned,
+      priority: entry.priority,
+      notes: entry.notes,
     });
-
     setEditingId(null);
   }
 
@@ -116,6 +99,7 @@ function InterviewJournal() {
 
     return matchesSearch && matchesRound && matchesPriority;
   });
+
   return (
     <div className="max-w-4xl">
       <ModuleHeader label="Interview Journal" />
@@ -128,6 +112,7 @@ function InterviewJournal() {
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="Company"
+              required
             />
 
             <select
@@ -236,7 +221,7 @@ function InterviewJournal() {
               textareaClass={textareaClass}
               selectClass={selectClass}
               buttonClass={buttonClass}
-              onSave={saveEdit}
+              onSave={handleSaveEdit}
               onCancel={() => setEditingId(null)}
             />
           ) : (
@@ -257,34 +242,49 @@ function InterviewJournal() {
               </div>
 
               <p className="text-sm text-text-muted mb-1">
-                Added: {entry.dateAdded}
+                Added:{" "}
+                {entry.createdAt
+                  ? new Date(entry.createdAt).toLocaleDateString()
+                  : ""}
               </p>
 
-              <p className="text-sm text-text-muted mb-1">
-                <span className="text-text-primary">Questions:</span>{" "}
-                {entry.questionsAsked}
-              </p>
+              {entry.questionsAsked?.trim() && (
+                <p className="text-sm text-text-muted mb-1">
+                  <span className="text-text-primary">Questions:</span>{" "}
+                  {entry.questionsAsked}
+                </p>
+              )}
 
-              <p className="text-sm text-text-muted mb-1">
-                <span className="text-text-primary">My answer:</span>{" "}
-                {entry.myAnswer}
-              </p>
+              {entry.myAnswer?.trim() && (
+                <p className="text-sm text-text-muted mb-1">
+                  <span className="text-text-primary">My answer:</span>{" "}
+                  {entry.myAnswer}
+                </p>
+              )}
 
-              <p className="text-sm text-text-muted mb-1">
-                <span className="text-text-primary">Mistakes:</span>{" "}
-                {entry.mistakes}
-              </p>
+              {entry.mistakes?.trim() && (
+                <p className="text-sm text-text-muted mb-1">
+                  <span className="text-text-primary">Mistakes:</span>{" "}
+                  {entry.mistakes}
+                </p>
+              )}
 
-              <p className="text-sm text-text-muted mb-1">
-                <span className="text-text-primary">Lessons learned:</span>{" "}
-                {entry.lessonsLearned}
-              </p>
+              {entry.lessonsLearned?.trim() && (
+                <p className="text-sm text-text-muted mb-1">
+                  <span className="text-text-primary">Lessons learned:</span>{" "}
+                  {entry.lessonsLearned}
+                </p>
+              )}
 
-              {entry.notes?.trim() !== "" && (
+              {entry.notes?.trim() && (
                 <p className="text-sm text-text-muted mb-3">
                   <span className="text-text-primary">Notes:</span>{" "}
                   {entry.notes}
                 </p>
+              )}
+
+              {entry.archived && (
+                <p className="text-yellow-400 text-sm mb-3">Archived</p>
               )}
 
               <div className="flex flex-wrap gap-2">
@@ -297,7 +297,7 @@ function InterviewJournal() {
 
                 <button
                   className={buttonClass}
-                  onClick={() => deleteInterview(entry.id)}
+                  onClick={() => handleDelete(entry.id)}
                 >
                   Delete
                 </button>
@@ -305,14 +305,14 @@ function InterviewJournal() {
                 {entry.archived ? (
                   <button
                     className={buttonClass}
-                    onClick={() => restoreInterview(entry.id)}
+                    onClick={() => handleRestore(entry.id)}
                   >
                     Restore
                   </button>
                 ) : (
                   <button
                     className={buttonClass}
-                    onClick={() => archiveInterview(entry.id)}
+                    onClick={() => handleArchive(entry.id)}
                   >
                     Archive
                   </button>
@@ -321,7 +321,9 @@ function InterviewJournal() {
                 <select
                   className={selectClass}
                   value={entry.priority}
-                  onChange={(e) => changePriority(entry.id, e.target.value)}
+                  onChange={(e) =>
+                    handleChangePriority(entry.id, e.target.value)
+                  }
                 >
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>

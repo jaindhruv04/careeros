@@ -89,32 +89,40 @@ export function getRecentActivity(
       type: "Company",
       title: company.name,
       priority: company.priority,
-      dateAdded: company.dateAdded,
-      timestamp: company.id,
+      dateAdded: company.createdAt
+        ? new Date(company.createdAt).toLocaleDateString()
+        : "",
+      timestamp: new Date(company.createdAt || 0).getTime(),
     })),
 
     ...dsaTopics.map((problem) => ({
       type: "DSA",
       title: problem.name,
       priority: problem.priority,
-      dateAdded: problem.dateAdded,
-      timestamp: problem.id,
+      dateAdded: problem.createdAt
+        ? new Date(problem.createdAt).toLocaleDateString()
+        : "",
+      timestamp: new Date(problem.createdAt || 0).getTime(),
     })),
 
     ...interviewEntries.map((entry) => ({
       type: "Interview",
       title: entry.company,
       priority: entry.priority,
-      dateAdded: entry.dateAdded,
-      timestamp: entry.id,
+      dateAdded: entry.createdAt
+        ? new Date(entry.createdAt).toLocaleDateString()
+        : "",
+      timestamp: new Date(entry.createdAt || 0).getTime(),
     })),
 
     ...projects.map((project) => ({
       type: "Project",
       title: project.name,
       priority: project.priority,
-      dateAdded: project.dateAdded,
-      timestamp: project.id,
+      dateAdded: project.createdAt
+        ? new Date(project.createdAt).toLocaleDateString()
+        : "",
+      timestamp: new Date(project.createdAt || 0).getTime(),
     })),
   ];
 

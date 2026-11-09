@@ -1,6 +1,5 @@
 import { useState, useContext } from "react";
 import { ProjectContext } from "../context/ProjectContext";
-import { getDateAdded } from "../utils/dateUtils";
 import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import EditProjectForm from "../components/EditProjectForm";
@@ -14,7 +13,8 @@ const buttonClass =
   "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function ProjectTracker() {
-  const { projects, dispatch } = useContext(ProjectContext);
+  const { projects, addProject, updateProject, deleteProject } =
+    useContext(ProjectContext);
 
   const [name, setName] = useState("");
   const [techStack, setTechStack] = useState("");
@@ -32,21 +32,14 @@ function ProjectTracker() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    const project = {
-      id: Date.now(),
+    addProject({
       name,
       techStack,
-      progress,
+      progress: Number(progress),
       status,
       priority,
-      dateAdded: getDateAdded(),
       notes,
       archived: false,
-    };
-
-    dispatch({
-      type: "ADD_PROJECT",
-      payload: project,
     });
 
     setName("");
@@ -57,43 +50,31 @@ function ProjectTracker() {
     setNotes("");
   }
 
-  function deleteProject(id) {
-    dispatch({
-      type: "DELETE_PROJECT",
-      payload: id,
-    });
+  function handleDelete(id) {
+    deleteProject(id);
   }
 
-  function archiveProject(id) {
-    dispatch({
-      type: "ARCHIVE_PROJECT",
-      payload: id,
-    });
+  function handleArchive(id) {
+    updateProject(id, { archived: true });
   }
 
-  function restoreProject(id) {
-    dispatch({
-      type: "RESTORE_PROJECT",
-      payload: id,
-    });
+  function handleRestore(id) {
+    updateProject(id, { archived: false });
   }
 
-  function changeStatus(id, status) {
-    dispatch({
-      type: "CHANGE_STATUS",
-      payload: {
-        id,
-        status,
-      },
-    });
+  function handleChangeStatus(id, newStatus) {
+    updateProject(id, { status: newStatus });
   }
 
-  function saveEdit(project) {
-    dispatch({
-      type: "EDIT_PROJECT",
-      payload: project,
+  function handleSaveEdit(project) {
+    updateProject(project.id, {
+      name: project.name,
+      techStack: project.techStack,
+      progress: Number(project.progress),
+      status: project.status,
+      priority: project.priority,
+      notes: project.notes,
     });
-
     setEditingId(null);
   }
 
@@ -110,6 +91,7 @@ function ProjectTracker() {
 
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
   return (
     <div className="max-w-4xl">
       <ModuleHeader label="Project Tracker" />
@@ -124,6 +106,7 @@ function ProjectTracker() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Project name"
+            required
           />
 
           <input
@@ -218,7 +201,7 @@ function ProjectTracker() {
               inputClass={inputClass}
               selectClass={selectClass}
               buttonClass={buttonClass}
-              onSave={saveEdit}
+              onSave={handleSaveEdit}
               onCancel={() => setEditingId(null)}
             />
           ) : (
@@ -250,7 +233,10 @@ function ProjectTracker() {
               </p>
 
               <p className="text-sm text-text-muted mb-2">
-                Added: {project.dateAdded}
+                Added:{" "}
+                {project.createdAt
+                  ? new Date(project.createdAt).toLocaleDateString()
+                  : ""}
               </p>
 
               {project.notes?.trim() !== "" && (
@@ -258,6 +244,10 @@ function ProjectTracker() {
                   <span className="text-text-primary">Notes:</span>{" "}
                   {project.notes}
                 </p>
+              )}
+
+              {project.archived && (
+                <p className="text-yellow-400 text-sm mb-3">Archived</p>
               )}
 
               <div className="flex flex-wrap gap-2">
@@ -270,7 +260,7 @@ function ProjectTracker() {
 
                 <button
                   className={buttonClass}
-                  onClick={() => deleteProject(project.id)}
+                  onClick={() => handleDelete(project.id)}
                 >
                   Delete
                 </button>
@@ -278,14 +268,14 @@ function ProjectTracker() {
                 {project.archived ? (
                   <button
                     className={buttonClass}
-                    onClick={() => restoreProject(project.id)}
+                    onClick={() => handleRestore(project.id)}
                   >
                     Restore
                   </button>
                 ) : (
                   <button
                     className={buttonClass}
-                    onClick={() => archiveProject(project.id)}
+                    onClick={() => handleArchive(project.id)}
                   >
                     Archive
                   </button>
@@ -294,7 +284,9 @@ function ProjectTracker() {
                 <select
                   className={selectClass}
                   value={project.status}
-                  onChange={(e) => changeStatus(project.id, e.target.value)}
+                  onChange={(e) =>
+                    handleChangeStatus(project.id, e.target.value)
+                  }
                 >
                   <option value="Planning">Planning</option>
                   <option value="In Progress">In progress</option>

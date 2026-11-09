@@ -1,66 +1,57 @@
-import { createContext, useReducer, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
+import { apiFetch } from "../utils/api";
 
 export const ProjectContext = createContext();
 
-function projectReducer(state, action) {
-  switch (action.type) {
-    case "ADD_PROJECT":
-      return [...state, action.payload];
-
-    case "DELETE_PROJECT":
-      return state.filter((project) => project.id !== action.payload);
-
-    case "EDIT_PROJECT":
-      return state.map((project) =>
-        project.id === action.payload.id
-          ? { ...project, ...action.payload }
-          : project
-      );
-
-    case "CHANGE_STATUS":
-      return state.map((project) =>
-        project.id === action.payload.id
-          ? { ...project, status: action.payload.status }
-          : project
-      );
-
-    case "ARCHIVE_PROJECT":
-      return state.map((project) =>
-        project.id === action.payload
-          ? { ...project, archived: true }
-          : project
-      );
-
-    case "RESTORE_PROJECT":
-      return state.map((project) =>
-        project.id === action.payload
-          ? { ...project, archived: false }
-          : project
-      );
-
-    default:
-      return state;
-  }
-}
-
 export function ProjectProvider({ children }) {
-  const storedProjects =
-    JSON.parse(localStorage.getItem("projects")) || [];
+  const [projects, setProjects] = useState([]);
 
-  const [projects, dispatch] = useReducer(
-    projectReducer,
-    storedProjects
-  );
+  async function fetchProjects() {
+    const res = await apiFetch("/projects");
+    if (res.ok) {
+      const data = await res.json();
+      setProjects(data);
+    }
+  }
 
   useEffect(() => {
-    localStorage.setItem(
-      "projects",
-      JSON.stringify(projects)
-    );
-  }, [projects]);
+    fetchProjects();
+  }, []);
+
+  async function addProject(projectData) {
+    const res = await apiFetch("/projects", {
+      method: "POST",
+      body: JSON.stringify(projectData),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setProjects((prev) => [data.project, ...prev]);
+    }
+  }
+
+  async function updateProject(id, updates) {
+    const res = await apiFetch(`/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    if (res.ok) {
+      await fetchProjects();
+    }
+  }
+
+  async function deleteProject(id) {
+    const res = await apiFetch(`/projects/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    }
+  }
 
   return (
-    <ProjectContext.Provider value={{ projects, dispatch }}>
+    <ProjectContext.Provider
+      value={{ projects, addProject, updateProject, deleteProject }}
+    >
       {children}
     </ProjectContext.Provider>
   );

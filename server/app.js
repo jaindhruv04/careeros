@@ -4,6 +4,8 @@ import "dotenv/config";
 import userRouter from "./routes/userRouter.js";
 import dsaRouter from "./routes/DSARouter.js";
 import companyRouter from "./routes/companyRouter.js";
+import projectRouter from "./routes/projectRouter.js";
+import interviewRouter from "./routes/interviewRouter.js";
 import aiRouter from "./routes/aiRouter.js";
 import analyticsRouter from "./routes/analyticsRouter.js";
 
@@ -19,6 +21,8 @@ app.use(
 app.use("/users", userRouter);
 app.use("/dsa", dsaRouter);
 app.use("/companies", companyRouter);
+app.use("/projects", projectRouter);
+app.use("/interviews", interviewRouter);
 app.use("/ai", aiRouter);
 app.use("/analytics", analyticsRouter);
 
