@@ -335,7 +335,22 @@ Run these from the repository root:
 | `npm run lint` | Run Oxlint |
 | `npm run deploy` | Publish the built `dist` directory using gh-pages |
 
-The backend package does not currently define a test suite or a start script. Start it with `node app.js` after installing dependencies and configuring the environment.
+The backend package provides an integration-test command. Start the API with `node app.js` after installing dependencies and configuring the environment.
+
+### Backend integration tests
+
+Run the integration tests from `server/`:
+
+```bash
+npx prisma migrate deploy
+npm test
+```
+
+The tests use Node.js's built-in test runner and the existing PostgreSQL driver. They start the Express API, exercise authentication and protected API routes, verify DSA and company CRUD plus per-user access isolation, and check the analytics response.
+
+**Important:** The test setup truncates the `User`, `DSAProblem`, and `Company` tables before running. Set `DATABASE_URL` to a dedicated test database only. Never point the test command at development or production data.
+
+GitHub Actions runs the same tests against a fresh PostgreSQL service on relevant pushes and pull requests.
 
 ## Current limitations
 
@@ -345,7 +360,7 @@ The backend package does not currently define a test suite or a start script. St
 - AI tools currently support reading company and DSA records, plus creating and deleting DSA records. They do not create or modify company applications.
 - AI-triggered DSA changes are made in the database, but the DSA context is not automatically refreshed by the AI chat component. Refreshing the tracker data is needed to see those changes in its list.
 - The AI chat interface does not persist conversation history between page reloads or send its history for backend context.
-- The backend package does not currently include automated tests.
+- Automated integration tests cover the authenticated REST API. The Groq provider integration and browser-only interview, project, and daily-goal flows do not currently have automated test coverage.
 
 ## Author
 
