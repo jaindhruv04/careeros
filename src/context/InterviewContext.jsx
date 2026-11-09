@@ -25,7 +25,9 @@ export function InterviewProvider({ children }) {
     });
     if (res.ok) {
       const data = await res.json();
-      setInterviewEntries((prev) => [data.entry, ...prev]);
+      setInterviewEntries((prev) => {
+        return [...prev, data.entry];
+      });
     }
   }
 
@@ -44,7 +46,7 @@ export function InterviewProvider({ children }) {
       method: "DELETE",
     });
     if (res.ok) {
-      setInterviewEntries((prev) => prev.filter((e) => e.id !== id));
+      await fetchEntries();
     }
   }
 

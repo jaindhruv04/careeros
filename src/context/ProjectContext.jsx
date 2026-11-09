@@ -25,7 +25,9 @@ export function ProjectProvider({ children }) {
     });
     if (res.ok) {
       const data = await res.json();
-      setProjects((prev) => [data.project, ...prev]);
+      setProjects((prev) => {
+        return [...prev, data.project];
+      });
     }
   }
 
@@ -44,7 +46,7 @@ export function ProjectProvider({ children }) {
       method: "DELETE",
     });
     if (res.ok) {
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+      await fetchProjects();
     }
   }
 

@@ -44,7 +44,6 @@ async function getAllEntries(req, res) {
   try {
     const entries = await prisma.interviewEntry.findMany({
       where: { userId: req.userId },
-      orderBy: { createdAt: "desc" },
     });
 
     return res.json(entries);
