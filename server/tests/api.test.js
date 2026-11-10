@@ -35,7 +35,7 @@ before(async () => {
 
   database = new Pool({ connectionString: databaseUrl });
   await database.query(
-    'TRUNCATE TABLE "DSAProblem", "Company", "User" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "DSAProblem", "Company", "Project", "InterviewEntry", "User" RESTART IDENTITY CASCADE',
   );
 
   serverProcess = spawn(process.execPath, ["app.js"], {
@@ -256,6 +256,487 @@ test("authenticated API routes enforce access control and persist user data", as
     assert.ok(Array.isArray(analytics.insights));
     assert.ok(Array.isArray(analytics.recommendations));
   });
+
+  // ─── Partial update tests ────────────────────────────────────────────────────
+
+  await t.test("DSA partial update: single field leaves other fields unchanged", async () => {
+    const createRes = await request("/dsa", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Merge Intervals",
+        topic: "Array",
+        difficulty: "Medium",
+        status: "Not Started",
+        priority: "High",
+        revisionNeeded: false,
+        notes: "original notes",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).problem;
+
+    // Patch only status — all other fields must stay as created.
+    const patchRes = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Solved" },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.status, "Solved");
+    assert.equal(patched.name, "Merge Intervals", "name must be unchanged");
+    assert.equal(patched.topic, "Array", "topic must be unchanged");
+    assert.equal(patched.difficulty, "Medium", "difficulty must be unchanged");
+    assert.equal(patched.priority, "High", "priority must be unchanged");
+    assert.equal(patched.revisionNeeded, false, "revisionNeeded must be unchanged");
+    assert.equal(patched.notes, "original notes", "notes must be unchanged");
+
+    // Patch only revisionNeeded — status must stay "Solved".
+    const patchRes2 = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { revisionNeeded: true },
+    });
+    assert.equal(patchRes2.status, 200);
+    const patched2 = await patchRes2.json();
+    assert.equal(patched2.revisionNeeded, true);
+    assert.equal(patched2.status, "Solved", "status must still be Solved");
+    assert.equal(patched2.name, "Merge Intervals", "name must be unchanged");
+
+    // Cleanup
+    await request(`/dsa/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("DSA partial update: multiple fields updated together", async () => {
+    const createRes = await request("/dsa", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Valid Parentheses",
+        topic: "Stack",
+        difficulty: "Easy",
+        status: "Not Started",
+        priority: "Low",
+        revisionNeeded: false,
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).problem;
+
+    const patchRes = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "In Progress", priority: "High", archived: true },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.status, "In Progress");
+    assert.equal(patched.priority, "High");
+    assert.equal(patched.archived, true);
+    assert.equal(patched.name, "Valid Parentheses", "name must be unchanged");
+    assert.equal(patched.topic, "Stack", "topic must be unchanged");
+    assert.equal(patched.difficulty, "Easy", "difficulty must be unchanged");
+
+    // Cleanup
+    await request(`/dsa/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("DSA partial update: explicit null clears nullable notes field", async () => {
+    const createRes = await request("/dsa", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Binary Search",
+        topic: "Binary Search",
+        difficulty: "Easy",
+        status: "Solved",
+        priority: "Medium",
+        notes: "some notes to clear",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).problem;
+    assert.equal(created.notes, "some notes to clear");
+
+    // Explicit null should clear the nullable field.
+    const patchRes = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { notes: null },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.notes, null, "notes should be cleared to null");
+    assert.equal(patched.name, "Binary Search", "name must be unchanged");
+
+    // Cleanup
+    await request(`/dsa/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("DSA partial update: cross-user patch is blocked", async () => {
+    const createRes = await request("/dsa", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Climbing Stairs",
+        topic: "DP",
+        difficulty: "Easy",
+        status: "Not Started",
+        priority: "Low",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).problem;
+
+    // secondUser must not be able to update firstUser's record.
+    const forbiddenPatch = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: secondToken,
+      body: { status: "Solved" },
+    });
+    assert.equal(forbiddenPatch.status, 404);
+
+    // Verify the record was not modified.
+    const verifyRes = await request(`/dsa/${created.id}`, { token: firstToken });
+    assert.equal(verifyRes.status, 200);
+    assert.equal((await verifyRes.json()).status, "Not Started");
+
+    // Cleanup
+    await request(`/dsa/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("DSA partial update: non-existent record returns 404", async () => {
+    const res = await request("/dsa/999999999", {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Solved" },
+    });
+    assert.equal(res.status, 404);
+  });
+
+  await t.test("Company partial update: single field leaves other fields unchanged", async () => {
+    const createRes = await request("/companies", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Acme Corp",
+        role: "Backend Engineer",
+        status: "Applied",
+        applicationDate: "2026-11-01",
+        priority: "Medium",
+        notes: "original company notes",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).company;
+
+    // Patch only status.
+    const patchRes = await request(`/companies/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Interviewing" },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.status, "Interviewing");
+    assert.equal(patched.name, "Acme Corp", "name must be unchanged");
+    assert.equal(patched.role, "Backend Engineer", "role must be unchanged");
+    assert.equal(patched.applicationDate, "2026-11-01", "applicationDate must be unchanged");
+    assert.equal(patched.priority, "Medium", "priority must be unchanged");
+    assert.equal(patched.notes, "original company notes", "notes must be unchanged");
+
+    // Cleanup
+    await request(`/companies/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("Company partial update: explicit null clears nullable applicationDate", async () => {
+    const createRes = await request("/companies", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Nullcorp",
+        role: "SWE",
+        status: "Applied",
+        applicationDate: "2026-10-15",
+        priority: "Low",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).company;
+    assert.equal(created.applicationDate, "2026-10-15");
+
+    // Explicit null should clear the nullable applicationDate field.
+    const patchRes = await request(`/companies/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { applicationDate: null },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.applicationDate, null, "applicationDate should be cleared to null");
+    assert.equal(patched.name, "Nullcorp", "name must be unchanged");
+    assert.equal(patched.role, "SWE", "role must be unchanged");
+
+    // Cleanup
+    await request(`/companies/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("Company partial update: cross-user patch is blocked", async () => {
+    const createRes = await request("/companies", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Secret Corp",
+        role: "DevOps",
+        status: "Applied",
+        priority: "High",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).company;
+
+    const forbiddenPatch = await request(`/companies/${created.id}`, {
+      method: "PATCH",
+      token: secondToken,
+      body: { status: "Offer" },
+    });
+    assert.equal(forbiddenPatch.status, 404);
+
+    // Verify the record was not modified.
+    const verifyRes = await request(`/companies/${created.id}`, { token: firstToken });
+    assert.equal(verifyRes.status, 200);
+    assert.equal((await verifyRes.json()).status, "Applied");
+
+    // Cleanup
+    await request(`/companies/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("Company partial update: non-existent record returns 404", async () => {
+    const res = await request("/companies/999999999", {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Offer" },
+    });
+    assert.equal(res.status, 404);
+  });
+
+  await t.test("Project partial update: single field leaves other fields unchanged", async () => {
+    const createRes = await request("/projects", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Distributed Cache",
+        techStack: "Go, Redis",
+        progress: 40,
+        status: "In Progress",
+        priority: "High",
+        notes: "original project notes",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).project;
+
+    // Patch only progress.
+    const patchRes = await request(`/projects/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { progress: 75 },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.progress, 75);
+    assert.equal(patched.name, "Distributed Cache", "name must be unchanged");
+    assert.equal(patched.techStack, "Go, Redis", "techStack must be unchanged");
+    assert.equal(patched.status, "In Progress", "status must be unchanged");
+    assert.equal(patched.priority, "High", "priority must be unchanged");
+    assert.equal(patched.notes, "original project notes", "notes must be unchanged");
+
+    // Cleanup
+    await request(`/projects/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("Project partial update: multiple fields updated together", async () => {
+    const createRes = await request("/projects", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Blog Engine",
+        techStack: "React, Node",
+        progress: 10,
+        status: "Planning",
+        priority: "Low",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).project;
+
+    const patchRes = await request(`/projects/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Completed", progress: 100, priority: "Medium" },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.status, "Completed");
+    assert.equal(patched.progress, 100);
+    assert.equal(patched.priority, "Medium");
+    assert.equal(patched.name, "Blog Engine", "name must be unchanged");
+    assert.equal(patched.techStack, "React, Node", "techStack must be unchanged");
+
+    // Cleanup
+    await request(`/projects/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("Project partial update: cross-user patch is blocked", async () => {
+    const createRes = await request("/projects", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        name: "Secret Project",
+        techStack: "Rust",
+        progress: 0,
+        status: "Planning",
+        priority: "High",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).project;
+
+    const forbiddenPatch = await request(`/projects/${created.id}`, {
+      method: "PATCH",
+      token: secondToken,
+      body: { status: "Completed" },
+    });
+    assert.equal(forbiddenPatch.status, 404);
+
+    // Verify record was not modified.
+    const verifyRes = await request(`/projects/${created.id}`, { token: firstToken });
+    assert.equal(verifyRes.status, 200);
+    assert.equal((await verifyRes.json()).status, "Planning");
+
+    // Cleanup
+    await request(`/projects/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("Project partial update: non-existent record returns 404", async () => {
+    const res = await request("/projects/999999999", {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Completed" },
+    });
+    assert.equal(res.status, 404);
+  });
+
+  await t.test("InterviewEntry partial update: single field leaves other fields unchanged", async () => {
+    const createRes = await request("/interviews", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        company: "StreamCo",
+        round: "Technical",
+        questionsAsked: "Explain virtual DOM",
+        myAnswer: "It is an in-memory representation",
+        mistakes: "forgot to mention reconciliation",
+        lessonsLearned: "study reconciliation algorithm",
+        priority: "High",
+        notes: "original interview notes",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).entry;
+
+    // Patch only priority.
+    const patchRes = await request(`/interviews/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { priority: "Low" },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.priority, "Low");
+    assert.equal(patched.company, "StreamCo", "company must be unchanged");
+    assert.equal(patched.round, "Technical", "round must be unchanged");
+    assert.equal(patched.questionsAsked, "Explain virtual DOM", "questionsAsked must be unchanged");
+    assert.equal(patched.myAnswer, "It is an in-memory representation", "myAnswer must be unchanged");
+    assert.equal(patched.mistakes, "forgot to mention reconciliation", "mistakes must be unchanged");
+    assert.equal(patched.lessonsLearned, "study reconciliation algorithm", "lessonsLearned must be unchanged");
+    assert.equal(patched.notes, "original interview notes", "notes must be unchanged");
+
+    // Cleanup
+    await request(`/interviews/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("InterviewEntry partial update: explicit null clears nullable notes field", async () => {
+    const createRes = await request("/interviews", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        company: "ClearCo",
+        round: "HR",
+        priority: "Low",
+        notes: "notes to clear",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).entry;
+    assert.equal(created.notes, "notes to clear");
+
+    // Explicit null clears the nullable notes field.
+    const patchRes = await request(`/interviews/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { notes: null },
+    });
+    assert.equal(patchRes.status, 200);
+    const patched = await patchRes.json();
+    assert.equal(patched.notes, null, "notes should be cleared to null");
+    assert.equal(patched.company, "ClearCo", "company must be unchanged");
+    assert.equal(patched.priority, "Low", "priority must be unchanged");
+
+    // Cleanup
+    await request(`/interviews/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("InterviewEntry partial update: cross-user patch is blocked", async () => {
+    const createRes = await request("/interviews", {
+      method: "POST",
+      token: firstToken,
+      body: {
+        company: "PrivateCo",
+        round: "Managerial",
+        priority: "Medium",
+      },
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()).entry;
+
+    const forbiddenPatch = await request(`/interviews/${created.id}`, {
+      method: "PATCH",
+      token: secondToken,
+      body: { priority: "High" },
+    });
+    assert.equal(forbiddenPatch.status, 404);
+
+    // Verify record was not modified.
+    const verifyRes = await request(`/interviews/${created.id}`, { token: firstToken });
+    assert.equal(verifyRes.status, 200);
+    assert.equal((await verifyRes.json()).priority, "Medium");
+
+    // Cleanup
+    await request(`/interviews/${created.id}`, { method: "DELETE", token: firstToken });
+  });
+
+  await t.test("InterviewEntry partial update: non-existent record returns 404", async () => {
+    const res = await request("/interviews/999999999", {
+      method: "PATCH",
+      token: firstToken,
+      body: { priority: "High" },
+    });
+    assert.equal(res.status, 404);
+  });
+
+  // ─── End of partial update tests ────────────────────────────────────────────
 
   const currentUserResponse = await request("/users/me", {
     token: firstToken,

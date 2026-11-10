@@ -29,3 +29,13 @@ scripts/requirements.txt
 .env
 .env.*
 !.env.example
+
+# Private AI agent instructions
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+AGENT_HANDOFF.md
+
+# Private AI configurations
+.kiro/
+.github/copilot-instructions.md

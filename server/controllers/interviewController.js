@@ -93,17 +93,12 @@ async function updateEntry(req, res) {
     archived,
   } = req.body;
 
+  // Prisma 7 skips undefined fields in the data object — only explicitly provided
+  // fields (including null for nullable columns) are written to the database.
+  // updateMany with { id, userId } enforces ownership atomically in a single query.
   try {
-    const existing = await prisma.interviewEntry.findFirst({
+    const result = await prisma.interviewEntry.updateMany({
       where: { id, userId: req.userId },
-    });
-
-    if (!existing) {
-      return res.status(404).json({ error: "Entry not found" });
-    }
-
-    const entry = await prisma.interviewEntry.update({
-      where: { id },
       data: {
         company,
         round,
@@ -117,6 +112,11 @@ async function updateEntry(req, res) {
       },
     });
 
+    if (result.count === 0) {
+      return res.status(404).json({ error: "Entry not found" });
+    }
+
+    const entry = await prisma.interviewEntry.findUnique({ where: { id } });
     return res.status(200).json(entry);
   } catch {
     return res.status(500).json({ error: "Something went wrong" });
