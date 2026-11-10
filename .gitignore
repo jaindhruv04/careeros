@@ -39,3 +39,44 @@ AGENT_HANDOFF.md
 # Private AI configurations
 .kiro/
 .github/copilot-instructions.md
+
+# Test and coverage artifacts
+coverage/
+.nyc_output/
+
+# Build and framework caches
+.vite/
+.cache/
+.parcel-cache/
+
+# Debug and temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Local databases and database backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+
+# Certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Deployment and hosting
+.vercel/
+.netlify/
+
+# Playwright / browser test artifacts
+playwright-report/
+test-results/
