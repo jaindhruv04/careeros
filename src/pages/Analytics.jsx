@@ -20,7 +20,10 @@ function Analytics() {
   useEffect(() => {
     async function fetchAnalytics() {
       try {
-        const res = await apiFetch("/analytics");
+        const [res] = await Promise.all([
+          apiFetch("/analytics"),
+          new Promise((resolve) => setTimeout(resolve, 800)),
+        ]);
         if (res.ok) {
           const analytics = await res.json();
           setData(analytics);

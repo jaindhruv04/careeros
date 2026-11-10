@@ -9,7 +9,10 @@ export function ProjectProvider({ children }) {
 
   async function fetchProjects() {
     try {
-      const res = await apiFetch("/projects");
+      const [res] = await Promise.all([
+        apiFetch("/projects"),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
       if (res.ok) {
         const data = await res.json();
         setProjects(data);

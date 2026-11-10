@@ -9,7 +9,10 @@ export function CompanyProvider({ children }) {
 
   async function fetchCompanies() {
     try {
-      const res = await apiFetch("/companies");
+      const [res] = await Promise.all([
+        apiFetch("/companies"),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
       if (res.ok) {
         const data = await res.json();
         setCompanies(data);

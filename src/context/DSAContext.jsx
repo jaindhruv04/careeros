@@ -9,7 +9,10 @@ export function DSAProvider({ children }) {
 
   async function fetchProblems() {
     try {
-      const res = await apiFetch("/dsa");
+      const [res] = await Promise.all([
+        apiFetch("/dsa"),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
       if (res.ok) {
         const data = await res.json();
         setDsaTopics(data);

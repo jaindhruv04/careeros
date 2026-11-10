@@ -9,7 +9,10 @@ export function InterviewProvider({ children }) {
 
   async function fetchEntries() {
     try {
-      const res = await apiFetch("/interviews");
+      const [res] = await Promise.all([
+        apiFetch("/interviews"),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
       if (res.ok) {
         const data = await res.json();
         setInterviewEntries(data);
