@@ -27,6 +27,7 @@ import {
 } from "../utils/dashboardUtils";
 import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
+import LaserSkeleton from "../components/LaserSkeleton";
 
 function StatTile({ icon: Icon, label, value, subtext, gradient, glow }) {
   return (
@@ -82,10 +83,27 @@ function Dashboard() {
   ]);
   const [goalText, setGoalText] = useState("");
 
-  const { companies } = useContext(CompanyContext);
-  const { dsaTopics } = useContext(DSAContext);
-  const { interviewEntries } = useContext(InterviewContext);
-  const { projects } = useContext(ProjectContext);
+  const { companies, loading: compLoading } = useContext(CompanyContext);
+  const { dsaTopics, loading: dsaLoading } = useContext(DSAContext);
+  const { interviewEntries, loading: intLoading } = useContext(InterviewContext);
+  const { projects, loading: projLoading } = useContext(ProjectContext);
+
+  const isLoading = compLoading || dsaLoading || intLoading || projLoading;
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-8">
+        <ModuleHeader
+          label="Dashboard"
+          description="Connecting to backend deployment and compiling workspace telemetry..."
+        />
+        <LaserSkeleton
+          type="dashboard"
+          message="SCANNING_CLUSTER_TELEMETRY..."
+        />
+      </div>
+    );
+  }
 
   const stats = getOverallStats(companies, dsaTopics, interviewEntries, projects);
   const highPriority = getHighPriorityItems(companies, dsaTopics, interviewEntries, projects);

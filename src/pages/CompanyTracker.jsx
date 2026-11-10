@@ -16,13 +16,14 @@ import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import StatusBadge from "../components/StatusBadge";
 import EditCompanyForm from "../components/EditCompanyForm";
+import LaserSkeleton from "../components/LaserSkeleton";
 
 const inputClass =
   "w-full bg-surface-subtle border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
 const selectClass = inputClass;
 
 function CompanyTracker() {
-  const { companies, addCompany, updateCompany, deleteCompany } =
+  const { companies, loading, addCompany, updateCompany, deleteCompany } =
     useContext(CompanyContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -75,6 +76,21 @@ function CompanyTracker() {
   function saveEdit(company) {
     updateCompany(company.id, company);
     setEditingId(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="Company Tracker"
+          description="Connecting to database and synchronizing applications..."
+        />
+        <LaserSkeleton
+          type="tracker"
+          message="SYNCING_APPLICATIONS_DATABASE..."
+        />
+      </div>
+    );
   }
 
   const filteredCompanies = companies.filter((company) => {

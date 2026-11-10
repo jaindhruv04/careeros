@@ -8,10 +8,10 @@ import {
   Code2,
   CheckCircle2,
   AlertTriangle,
-  Loader2,
 } from "lucide-react";
 import { apiFetch } from "../utils/api";
 import ModuleHeader from "../components/ModuleHeader";
+import LaserSkeleton from "../components/LaserSkeleton";
 
 function Analytics() {
   const [data, setData] = useState(null);
@@ -37,11 +37,14 @@ function Analytics() {
   if (loading) {
     return (
       <div className="w-full max-w-5xl mx-auto space-y-8">
-        <ModuleHeader label="Analytics" description="Loading your performance telemetry..." />
-        <div className="flex flex-col items-center justify-center py-24 text-text-muted">
-          <Loader2 className="w-8 h-8 text-accent animate-spin mb-3" />
-          <p className="text-sm font-mono">Aggregating interview & problem stats...</p>
-        </div>
+        <ModuleHeader
+          label="Analytics & Telemetry"
+          description="Connecting to Render cluster instance and compiling telemetry..."
+        />
+        <LaserSkeleton
+          type="analytics"
+          message="SCANNING_ANALYTICS_DATA..."
+        />
       </div>
     );
   }

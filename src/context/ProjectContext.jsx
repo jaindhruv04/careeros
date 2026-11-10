@@ -5,12 +5,17 @@ export const ProjectContext = createContext();
 
 export function ProjectProvider({ children }) {
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   async function fetchProjects() {
-    const res = await apiFetch("/projects");
-    if (res.ok) {
-      const data = await res.json();
-      setProjects(data);
+    try {
+      const res = await apiFetch("/projects");
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -52,7 +57,7 @@ export function ProjectProvider({ children }) {
 
   return (
     <ProjectContext.Provider
-      value={{ projects, addProject, updateProject, deleteProject }}
+      value={{ projects, loading, addProject, updateProject, deleteProject }}
     >
       {children}
     </ProjectContext.Provider>

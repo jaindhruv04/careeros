@@ -17,13 +17,14 @@ import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import StatusBadge from "../components/StatusBadge";
 import EditDSAForm from "../components/EditDSAForm";
+import LaserSkeleton from "../components/LaserSkeleton";
 
 const inputClass =
   "w-full bg-surface-subtle border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
 const selectClass = inputClass;
 
 function DSATracker() {
-  const { dsaTopics, addProblem, deleteProblem, updateProblem } =
+  const { dsaTopics, loading, addProblem, deleteProblem, updateProblem } =
     useContext(DSAContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -84,6 +85,21 @@ function DSATracker() {
   function saveEdit(problem) {
     updateProblem(problem.id, problem);
     setEditingId(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="DSA Tracker"
+          description="Connecting to database and synchronizing problem telemetry..."
+        />
+        <LaserSkeleton
+          type="tracker"
+          message="SCANNING_DSA_PROBLEMS..."
+        />
+      </div>
+    );
   }
 
   const filteredTopics = dsaTopics.filter((problem) => {

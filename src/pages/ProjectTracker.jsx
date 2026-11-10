@@ -16,13 +16,14 @@ import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import StatusBadge from "../components/StatusBadge";
 import EditProjectForm from "../components/EditProjectForm";
+import LaserSkeleton from "../components/LaserSkeleton";
 
 const inputClass =
   "w-full bg-surface-subtle border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
 const selectClass = inputClass;
 
 function ProjectTracker() {
-  const { projects, addProject, updateProject, deleteProject } =
+  const { projects, loading, addProject, updateProject, deleteProject } =
     useContext(ProjectContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -88,6 +89,21 @@ function ProjectTracker() {
       notes: project.notes,
     });
     setEditingId(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="Project Tracker"
+          description="Connecting to database and synchronizing portfolio projects..."
+        />
+        <LaserSkeleton
+          type="tracker"
+          message="SCANNING_PORTFOLIO_PROJECTS..."
+        />
+      </div>
+    );
   }
 
   const filteredProjects = projects.filter((project) => {

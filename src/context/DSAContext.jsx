@@ -5,12 +5,17 @@ export const DSAContext = createContext();
 
 export function DSAProvider({ children }) {
   const [dsaTopics, setDsaTopics] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   async function fetchProblems() {
-    const res = await apiFetch("/dsa");
-    if (res.ok) {
-      const data = await res.json();
-      setDsaTopics(data);
+    try {
+      const res = await apiFetch("/dsa");
+      if (res.ok) {
+        const data = await res.json();
+        setDsaTopics(data);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -52,7 +57,7 @@ export function DSAProvider({ children }) {
 
   return (
     <DSAContext.Provider
-      value={{ dsaTopics, addProblem, updateProblem, deleteProblem }}
+      value={{ dsaTopics, loading, addProblem, updateProblem, deleteProblem }}
     >
       {children}
     </DSAContext.Provider>

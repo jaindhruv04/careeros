@@ -5,12 +5,17 @@ export const CompanyContext = createContext();
 
 export function CompanyProvider({ children }) {
   const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   async function fetchCompanies() {
-    const res = await apiFetch("/companies");
-    if (res.ok) {
-      const data = await res.json();
-      setCompanies(data);
+    try {
+      const res = await apiFetch("/companies");
+      if (res.ok) {
+        const data = await res.json();
+        setCompanies(data);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -52,7 +57,7 @@ export function CompanyProvider({ children }) {
 
   return (
     <CompanyContext.Provider
-      value={{ companies, addCompany, updateCompany, deleteCompany }}
+      value={{ companies, loading, addCompany, updateCompany, deleteCompany }}
     >
       {children}
     </CompanyContext.Provider>

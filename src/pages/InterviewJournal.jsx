@@ -17,6 +17,7 @@ import { InterviewContext } from "../context/InterviewContext";
 import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import EditInterviewForm from "../components/EditInterviewForm";
+import LaserSkeleton from "../components/LaserSkeleton";
 
 const inputClass =
   "w-full bg-surface-subtle border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
@@ -25,7 +26,7 @@ const textareaClass =
   "w-full bg-surface-subtle border border-border rounded-lg p-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent min-h-[70px] resize-y";
 
 function InterviewJournal() {
-  const { interviewEntries, addEntry, updateEntry, deleteEntry } =
+  const { interviewEntries, loading, addEntry, updateEntry, deleteEntry } =
     useContext(InterviewContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -99,6 +100,21 @@ function InterviewJournal() {
       notes: entry.notes,
     });
     setEditingId(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="Interview Journal"
+          description="Connecting to database and synchronizing debrief records..."
+        />
+        <LaserSkeleton
+          type="tracker"
+          message="SCANNING_INTERVIEW_DEBRIEFS..."
+        />
+      </div>
+    );
   }
 
   const filteredEntries = interviewEntries.filter((entry) => {

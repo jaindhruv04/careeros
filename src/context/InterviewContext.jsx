@@ -5,12 +5,17 @@ export const InterviewContext = createContext();
 
 export function InterviewProvider({ children }) {
   const [interviewEntries, setInterviewEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   async function fetchEntries() {
-    const res = await apiFetch("/interviews");
-    if (res.ok) {
-      const data = await res.json();
-      setInterviewEntries(data);
+    try {
+      const res = await apiFetch("/interviews");
+      if (res.ok) {
+        const data = await res.json();
+        setInterviewEntries(data);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -52,7 +57,7 @@ export function InterviewProvider({ children }) {
 
   return (
     <InterviewContext.Provider
-      value={{ interviewEntries, addEntry, updateEntry, deleteEntry }}
+      value={{ interviewEntries, loading, addEntry, updateEntry, deleteEntry }}
     >
       {children}
     </InterviewContext.Provider>
