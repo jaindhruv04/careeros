@@ -1,19 +1,32 @@
 import { useState, useContext } from "react";
+import {
+  Plus,
+  Search,
+  Code2,
+  Pencil,
+  Trash2,
+  Archive,
+  RotateCcw,
+  FileText,
+  SlidersHorizontal,
+  RotateCcw as RevisionIcon,
+} from "lucide-react";
 import { DSAContext } from "../context/DSAContext";
 import { getDateAdded } from "../utils/dateUtils";
 import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
+import StatusBadge from "../components/StatusBadge";
 import EditDSAForm from "../components/EditDSAForm";
 
 const inputClass =
-  "w-full sm:w-auto min-w-0 bg-bg border border-border rounded px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
+  "w-full bg-surface-subtle border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
 const selectClass = inputClass;
-const buttonClass =
-  "px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function DSATracker() {
   const { dsaTopics, addProblem, deleteProblem, updateProblem } =
     useContext(DSAContext);
+
+  const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("Easy");
@@ -21,6 +34,7 @@ function DSATracker() {
   const [revisionNeeded, setRevisionNeeded] = useState(false);
   const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
+
   const [searchText, setSearchText] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
   const [revisionFilter, setRevisionFilter] = useState("All");
@@ -29,6 +43,7 @@ function DSATracker() {
 
   function handleSubmit(e) {
     e.preventDefault();
+    if (!name.trim()) return;
     addProblem({
       id: Date.now(),
       name,
@@ -48,7 +63,9 @@ function DSATracker() {
     setRevisionNeeded(false);
     setPriority("Medium");
     setNotes("");
+    setShowAddForm(false);
   }
+
   function deleteDSA(id) {
     deleteProblem(id);
   }
@@ -58,8 +75,11 @@ function DSATracker() {
   function restoreDSA(id) {
     updateProblem(id, { archived: false });
   }
-  function changeStatus(id, status) {
-    updateProblem(id, { status });
+  function changeStatus(id, newStatus) {
+    updateProblem(id, { status: newStatus });
+  }
+  function toggleRevision(problem) {
+    updateProblem(problem.id, { revisionNeeded: !problem.revisionNeeded });
   }
   function saveEdit(problem) {
     updateProblem(problem.id, problem);
@@ -67,9 +87,9 @@ function DSATracker() {
   }
 
   const filteredTopics = dsaTopics.filter((problem) => {
-    const matchesSearch = problem.name
-      .toLowerCase()
-      .includes(searchText.toLowerCase());
+    const matchesSearch =
+      problem.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      (problem.topic && problem.topic.toLowerCase().includes(searchText.toLowerCase()));
     const matchesDifficulty =
       difficultyFilter === "All" || problem.difficulty === difficultyFilter;
     const matchesRevision =
@@ -84,204 +104,352 @@ function DSATracker() {
   });
 
   return (
-    <div className="w-full max-w-4xl">
-      <ModuleHeader label="DSA Tracker" />
-      <div className="bg-surface border border-border rounded-lg p-4 mb-8">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-stretch sm:items-center"
-        >
-          <input
-            className={inputClass}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Problem name"
-          />
-          <input
-            className={inputClass}
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Topic"
-          />
-          <select
-            className={selectClass}
-            value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value)}
+    <div className="w-full max-w-5xl mx-auto space-y-6">
+      <ModuleHeader
+        label="DSA Tracker"
+        description="Master data structures and algorithms with active revision tracking and difficulty analytics."
+        action={
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-bg text-xs font-mono font-semibold hover:opacity-90 transition-opacity shadow-sm shadow-accent/10"
           >
+            <Plus className="w-4 h-4" />
+            {showAddForm ? "Close Form" : "Add Problem"}
+          </button>
+        }
+      />
+
+      {/* Add Problem Collapsible Form */}
+      {showAddForm && (
+        <div className="rounded-xl bg-surface border border-accent/30 p-5 shadow-xl shadow-accent/5 transition-all">
+          <div className="flex items-center gap-2 mb-4">
+            <Code2 className="w-4 h-4 text-accent" />
+            <h2 className="text-sm font-semibold text-text-primary">
+              Log New Problem
+            </h2>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                  Problem Name *
+                </label>
+                <input
+                  className={inputClass}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. LRU Cache, 3Sum"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                  Topic / Category *
+                </label>
+                <input
+                  className={inputClass}
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. Graphs, DP, Trees"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                  Difficulty
+                </label>
+                <select
+                  className={selectClass}
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                  Status
+                </label>
+                <select
+                  className={selectClass}
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Solved">Solved</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                  Priority
+                </label>
+                <select
+                  className={selectClass}
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                >
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                  Key Intuition / Notes
+                </label>
+                <input
+                  className={inputClass}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Binary search on answers, O(N log N)..."
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <label className="flex items-center gap-2 text-xs font-mono text-text-primary cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={revisionNeeded}
+                  onChange={(e) => setRevisionNeeded(e.target.checked)}
+                  className="w-4 h-4 rounded border-border bg-surface accent-accent"
+                />
+                Mark as Needs Revision
+              </label>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
+                >
+                  Save Problem
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Search and Filters Bar */}
+      <div className="p-4 rounded-xl bg-surface border border-border flex flex-col md:flex-row items-stretch md:items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            className="w-full bg-surface-subtle border border-border rounded-lg pl-9 pr-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            placeholder="Search problems or topics..."
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <SlidersHorizontal className="w-4 h-4 text-text-muted hidden sm:block" />
+          <select
+            className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
+            value={difficultyFilter}
+            onChange={(e) => setDifficultyFilter(e.target.value)}
+          >
+            <option value="All">All Difficulties</option>
             <option value="Easy">Easy</option>
             <option value="Medium">Medium</option>
             <option value="Hard">Hard</option>
           </select>
+
           <select
-            className={selectClass}
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
+            value={revisionFilter}
+            onChange={(e) => setRevisionFilter(e.target.value)}
           >
-            <option value="Not Started">Not started</option>
-            <option value="In Progress">In progress</option>
-            <option value="Solved">Solved</option>
+            <option value="All">All Problems</option>
+            <option value="Yes">Needs Revision</option>
+            <option value="No">No Revision</option>
           </select>
-          <label className="flex items-center gap-2 text-sm text-text-muted py-2">
-            <input
-              type="checkbox"
-              checked={revisionNeeded}
-              onChange={(e) => setRevisionNeeded(e.target.checked)}
-              className="accent-accent"
-            />
-            Needs revision
-          </label>
+
           <select
-            className={selectClass}
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
+            className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
           >
+            <option value="All">All Priorities</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
-          <input
-            className={inputClass}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Notes (optional)"
-          />
-          <button type="submit" className={buttonClass}>
-            Add problem
-          </button>
-        </form>
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <input
-          className={inputClass}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search by problem name"
-        />
-        <select
-          className={selectClass}
-          value={difficultyFilter}
-          onChange={(e) => setDifficultyFilter(e.target.value)}
-        >
-          <option value="All">All difficulties</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
-          <option value="Hard">Hard</option>
-        </select>
-        <select
-          className={selectClass}
-          value={revisionFilter}
-          onChange={(e) => setRevisionFilter(e.target.value)}
-        >
-          <option value="All">All problems</option>
-          <option value="Yes">Needs revision</option>
-          <option value="No">No revision needed</option>
-        </select>
-        <select
-          className={selectClass}
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-        >
-          <option value="All">All priorities</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
-      </div>
-
-      <ul className="flex flex-col gap-3">
-        {filteredTopics.map((problem) =>
-          editingId === problem.id ? (
-            <EditDSAForm
+      {/* Problems List */}
+      <div className="space-y-3">
+        {filteredTopics.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center rounded-xl bg-surface border border-dashed border-border p-6">
+            <Code2 className="w-10 h-10 text-text-muted mb-3 opacity-60" />
+            <p className="text-sm font-medium text-text-primary">
+              No DSA problems found
+            </p>
+            <p className="text-xs text-text-muted mt-1 max-w-sm">
+              {searchText ||
+              difficultyFilter !== "All" ||
+              revisionFilter !== "All" ||
+              priorityFilter !== "All"
+                ? "No problems match your current search or filters."
+                : "Add your first DSA practice problem to track your solving streak."}
+            </p>
+          </div>
+        ) : (
+          filteredTopics.map((problem) => (
+            <div
               key={problem.id}
-              problem={problem}
-              inputClass={inputClass}
-              selectClass={selectClass}
-              buttonClass={buttonClass}
-              onSave={saveEdit}
-              onCancel={() => setEditingId(null)}
-            />
-          ) : (
-            <li
-              key={problem.id}
-              className="bg-surface border border-border rounded-lg p-4 overflow-hidden"
+              className={`rounded-xl border p-4 sm:p-5 transition-all duration-150 ${
+                problem.archived
+                  ? "bg-surface/50 border-border/50 opacity-60"
+                  : "bg-surface border-border hover:border-accent/40 shadow-sm"
+              }`}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                <p className="text-text-primary font-medium break-words">
-                  {problem.name}
-                  <span className="text-text-muted font-normal">
-                    {" "}
-                    — {problem.topic}
-                  </span>
-                </p>
-                <div className="shrink-0">
-                  <PriorityBadge priority={problem.priority} />
+              {editingId === problem.id ? (
+                <EditDSAForm
+                  problem={problem}
+                  onSave={saveEdit}
+                  onCancel={() => setEditingId(null)}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {/* Card Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-text-primary text-base">
+                          {problem.name}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-white/5 text-text-secondary border border-border">
+                          {problem.topic}
+                        </span>
+                        {problem.archived && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            Archived
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <StatusBadge status={problem.difficulty} />
+                      <StatusBadge status={problem.status} />
+                      <PriorityBadge priority={problem.priority} />
+                    </div>
+                  </div>
+
+                  {/* Metadata and Revision Status */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+                    <button
+                      onClick={() => toggleRevision(problem)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors ${
+                        problem.revisionNeeded
+                          ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
+                          : "text-text-muted hover:text-text-primary bg-white/5 border border-border"
+                      }`}
+                    >
+                      <RevisionIcon className="w-3 h-3" />
+                      <span>
+                        {problem.revisionNeeded
+                          ? "Needs Revision"
+                          : "Revision Not Needed"}
+                      </span>
+                    </button>
+
+                    {problem.createdAt && (
+                      <span className="text-text-muted">
+                        Added: {new Date(problem.createdAt).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Approach / Notes */}
+                  {problem.notes?.trim() && (
+                    <div className="flex items-start gap-2 p-2.5 rounded-lg bg-surface-subtle border border-border/50 text-xs text-text-secondary">
+                      <FileText className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" />
+                      <p className="break-words leading-relaxed">{problem.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Actions Row */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono text-text-muted">
+                        Status:
+                      </span>
+                      <select
+                        className="bg-surface-subtle border border-border rounded-md px-2 py-1 text-xs text-text-primary font-mono focus:outline-none focus:border-accent"
+                        value={problem.status}
+                        onChange={(e) => changeStatus(problem.id, e.target.value)}
+                      >
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Solved">Solved</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditingId(problem.id)}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono rounded-md border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                        title="Edit Problem"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        <span>Edit</span>
+                      </button>
+
+                      {!problem.archived ? (
+                        <button
+                          onClick={() => archiveDSA(problem.id)}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono rounded-md border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                          title="Archive"
+                        >
+                          <Archive className="w-3 h-3" />
+                          <span>Archive</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => restoreDSA(problem.id)}
+                          className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono rounded-md border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                          title="Restore"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Restore</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => deleteDSA(problem.id)}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono rounded-md border border-border text-text-secondary hover:text-rose-400 hover:border-rose-500/30 hover:bg-rose-500/10 transition-colors"
+                        title="Delete Problem"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <p className="text-sm text-text-muted mb-1">
-                {problem.difficulty} · {problem.status}
-              </p>
-              <p className="text-sm mb-1">
-                {problem.revisionNeeded ? (
-                  <span className="text-warning">Needs revision</span>
-                ) : (
-                  <span className="text-text-muted">No revision needed</span>
-                )}
-              </p>
-              <p className="text-sm text-text-muted mb-2">
-                Added:{" "}
-                {problem.createdAt
-                  ? new Date(problem.createdAt).toLocaleDateString()
-                  : ""}
-              </p>
-              {problem.notes?.trim() !== "" && (
-                <p className="text-sm text-text-muted mb-3 break-words">
-                  <span className="text-text-primary">Notes:</span>{" "}
-                  {problem.notes}
-                </p>
               )}
-              <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
-                <button
-                  className={buttonClass}
-                  onClick={() => setEditingId(problem.id)}
-                >
-                  Edit
-                </button>
-                <button
-                  className={buttonClass}
-                  onClick={() => deleteDSA(problem.id)}
-                >
-                  Delete
-                </button>
-                {problem.archived ? (
-                  <button
-                    className={buttonClass}
-                    onClick={() => restoreDSA(problem.id)}
-                  >
-                    Restore
-                  </button>
-                ) : (
-                  <button
-                    className={buttonClass}
-                    onClick={() => archiveDSA(problem.id)}
-                  >
-                    Archive
-                  </button>
-                )}
-                <select
-                  className={selectClass}
-                  value={problem.status}
-                  onChange={(e) => changeStatus(problem.id, e.target.value)}
-                >
-                  <option value="Not Started">Not started</option>
-                  <option value="In Progress">In progress</option>
-                  <option value="Solved">Solved</option>
-                </select>
-              </div>
-            </li>
-          ),
+            </div>
+          ))
         )}
-      </ul>
+      </div>
     </div>
   );
 }

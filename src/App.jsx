@@ -22,7 +22,10 @@ function AuthenticatedLayout() {
       <DSAProvider>
         <InterviewProvider>
           <ProjectProvider>
-            <div className="flex min-h-screen overflow-x-hidden bg-bg">
+            <div className="relative flex min-h-screen overflow-x-hidden bg-bg">
+              {/* Subtle Ambient Radial Glow */}
+              <div className="pointer-events-none fixed top-0 right-1/4 -z-10 h-[500px] w-[500px] rounded-full bg-accent/5 blur-[120px]" />
+              <div className="pointer-events-none fixed bottom-10 left-1/3 -z-10 h-[400px] w-[400px] rounded-full bg-blue-500/5 blur-[140px]" />
               <Navbar />
               <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 sm:pb-24 md:px-8 md:pb-8 lg:px-10">
                 <Outlet />

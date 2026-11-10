@@ -1,92 +1,145 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, User, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { apiFetch } from "../utils/api";
-
-const inputClass =
-  "w-full bg-bg border border-border rounded px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent";
-
-const buttonClass =
-  "w-full px-4 py-2 text-sm font-mono border border-border rounded text-text-primary hover:border-accent hover:text-accent transition-colors";
 
 function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const res = await apiFetch("/users/register", {
-      method: "POST",
-      body: JSON.stringify({ name, email, password }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      navigate("/login");
-    } else {
-      setError(data.error);
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const res = await apiFetch("/users/register", {
+        method: "POST",
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        navigate("/login");
+      } else {
+        setError(data.error || "Failed to create account");
+      }
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center">
-      <div className="bg-surface border border-border rounded-lg p-8 w-full max-w-sm">
-        <h1 className="text-text-primary font-mono text-xl font-semibold mb-1">
-          CareerOS
-        </h1>
-        <p className="text-text-muted text-sm mb-6">Create a new account</p>
+    <div className="relative min-h-screen bg-bg flex items-center justify-center p-4 overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="pointer-events-none fixed top-1/4 left-1/3 h-[400px] w-[400px] rounded-full bg-accent/10 blur-[130px]" />
+      <div className="pointer-events-none fixed bottom-1/4 right-1/3 h-[400px] w-[400px] rounded-full bg-purple-500/10 blur-[140px]" />
+
+      <div className="relative w-full max-w-md rounded-2xl bg-surface/85 backdrop-blur-xl border border-border/80 p-8 shadow-2xl space-y-6">
+        {/* Brand header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-accent to-emerald-400 text-bg shadow-lg shadow-accent/20 mb-2">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary">
+            Career<span className="text-accent">OS</span>
+          </h1>
+          <p className="text-xs text-text-secondary">
+            Set up your placement workspace in seconds
+          </p>
+        </div>
 
         {error && (
-          <p className="text-red-400 text-sm mb-4 border border-red-400/30 bg-red-400/10 rounded px-3 py-2">
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
             {error}
-          </p>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-text-muted text-xs font-mono">Name</label>
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <label className="block text-[11px] font-mono text-text-muted">
+              Full Name
+            </label>
+            <div className="relative">
+              <User className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Alex Developer"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isLoading}
+                required
+                className="w-full bg-surface-subtle border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-text-muted text-xs font-mono">Email</label>
-            <input
-              className={inputClass}
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+          <div className="space-y-1">
+            <label className="block text-[11px] font-mono text-text-muted">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                required
+                className="w-full bg-surface-subtle border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-text-muted text-xs font-mono">
+          <div className="space-y-1">
+            <label className="block text-[11px] font-mono text-text-muted">
               Password
             </label>
-            <input
-              className={inputClass}
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Lock className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                required
+                className="w-full bg-surface-subtle border border-border rounded-xl pl-9 pr-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+              />
+            </div>
           </div>
 
-          <button type="submit" className={buttonClass}>
-            Create account
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-accent py-2.5 px-4 text-sm font-semibold text-bg hover:opacity-90 transition-opacity shadow-md shadow-accent/20 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Creating account...</span>
+              </>
+            ) : (
+              <>
+                <span>Get Started</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
 
-        <p className="text-text-muted text-sm mt-6 text-center">
-          Already have an account?{" "}
-          <Link to="/login" className="text-accent hover:underline">
+        <p className="text-center text-xs text-text-muted pt-2 border-t border-border/60">
+          Already registered?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-accent hover:underline transition-all"
+          >
             Sign in
           </Link>
         </p>
