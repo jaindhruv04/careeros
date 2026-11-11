@@ -12,9 +12,6 @@ dist
 dist-ssr
 *.local
 
-scripts/analytics.py
-scripts/requirements.txt
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -35,6 +32,8 @@ AGENTS.md
 CLAUDE.md
 GEMINI.md
 AGENT_HANDOFF.md
+CONTINUE.md
+.claude/
 
 # Private AI configurations
 .kiro/

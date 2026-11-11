@@ -24,6 +24,7 @@ async function createProblem(req, res) {
         topic,
         difficulty,
         status,
+        solvedDate: status === "Solved" ? new Date() : null,
         priority,
         revisionNeeded,
         notes,
@@ -90,29 +91,53 @@ async function updateProblem(req, res) {
     archived,
   } = req.body;
 
-  // Prisma 7 skips undefined fields in the data object — only explicitly provided
-  // fields (including null for nullable columns) are written to the database.
-  // updateMany with { id, userId } enforces ownership atomically in a single query.
+  // Prisma 7 skips undefined fields, while the user-scoped reads and updates preserve ownership.
   try {
-    const result = await prisma.dSAProblem.updateMany({
-      where: { id, userId: req.userId },
-      data: {
-        name,
-        topic,
-        difficulty,
-        status,
-        priority,
-        revisionNeeded,
-        notes,
-        archived,
-      },
+    const problem = await prisma.$transaction(async (tx) => {
+      const current = await tx.dSAProblem.findFirst({
+        where: { id, userId: req.userId },
+        select: { status: true, solvedDate: true },
+      });
+
+      if (!current) {
+        return null;
+      }
+
+      let solvedDate = current.solvedDate;
+      if (status !== undefined) {
+        if (status === "Solved" && current.status !== "Solved") {
+          solvedDate = new Date();
+        } else if (status !== "Solved") {
+          solvedDate = null;
+        }
+      }
+
+      const result = await tx.dSAProblem.updateMany({
+        where: { id, userId: req.userId },
+        data: {
+          name,
+          topic,
+          difficulty,
+          status,
+          solvedDate,
+          priority,
+          revisionNeeded,
+          notes,
+          archived,
+        },
+      });
+
+      if (result.count === 0) {
+        return null;
+      }
+
+      return tx.dSAProblem.findFirst({ where: { id, userId: req.userId } });
     });
 
-    if (result.count === 0) {
+    if (!problem) {
       return res.status(404).json({ error: "Problem not found" });
     }
 
-    const problem = await prisma.dSAProblem.findUnique({ where: { id } });
     return res.status(200).json(problem);
   } catch {
     return res.status(500).json({ error: "Something went wrong" });

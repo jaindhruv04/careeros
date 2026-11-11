@@ -1,0 +1,1 @@
+ALTER TABLE "DSAProblem" ADD COLUMN "solvedDate" TIMESTAMP(3);

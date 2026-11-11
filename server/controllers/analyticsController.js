@@ -1,5 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
 async function getUserAnalytics(req, res) {
   try {
     const userId = req.userId;
@@ -29,7 +31,7 @@ async function getUserAnalytics(req, res) {
   }
 }
 
-function calculateDSAAnalytics(problems) {
+function calculateDSAAnalytics(problems, now = new Date()) {
   const total = problems.length;
   const solved = problems.filter((p) => p.status === "Solved").length;
   const inProgress = problems.filter((p) => p.status === "In Progress").length;
@@ -82,12 +84,16 @@ function calculateDSAAnalytics(problems) {
     .sort((a, b) => b.rate - a.rate)
     .slice(0, 5);
 
-  const now = new Date();
-  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const nowMs = now.getTime();
+  const last7Days = nowMs - 7 * DAY_IN_MS;
+  const last30Days = nowMs - 30 * DAY_IN_MS;
 
-  const recent7 = problems.filter((p) => p.createdAt >= last7Days && p.status === "Solved").length;
-  const recent30 = problems.filter((p) => p.createdAt >= last30Days && p.status === "Solved").length;
+  const recent7 = problems.filter(
+    (p) => p.status === "Solved" && isWithinWindow(p.solvedDate, last7Days, nowMs),
+  ).length;
+  const recent30 = problems.filter(
+    (p) => p.status === "Solved" && isWithinWindow(p.solvedDate, last30Days, nowMs),
+  ).length;
 
   return {
     total,
@@ -107,7 +113,7 @@ function calculateDSAAnalytics(problems) {
   };
 }
 
-function calculateCompanyAnalytics(companies) {
+function calculateCompanyAnalytics(companies, now = new Date()) {
   const total = companies.length;
   const statusDist = {};
   const priorityDist = {};
@@ -117,22 +123,24 @@ function calculateCompanyAnalytics(companies) {
     priorityDist[c.priority] = (priorityDist[c.priority] || 0) + 1;
   });
 
-  const applied = statusDist.Applied || 0;
   const interviewing = statusDist.Interviewing || 0;
   const offer = statusDist.Offer || 0;
   const rejected = statusDist.Rejected || 0;
 
   const interviewConversion =
-    applied > 0 ? Math.round((interviewing / applied) * 100 * 100) / 100 : 0;
+    total > 0 ? Math.round(((interviewing + offer) / total) * 100 * 100) / 100 : 0;
   const offerConversion =
     interviewing + offer + rejected > 0
       ? Math.round((offer / (interviewing + offer + rejected)) * 100 * 100) / 100
       : 0;
   const overallSuccess = total > 0 ? Math.round((offer / total) * 100 * 100) / 100 : 0;
 
-  const now = new Date();
-  const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const recentApplications = companies.filter((c) => c.createdAt >= last30Days).length;
+  const nowMs = now.getTime();
+  const last30Days = nowMs - 30 * DAY_IN_MS;
+  const recentApplications = companies.filter((c) => {
+    const applicationDate = parseApplicationDate(c.applicationDate);
+    return applicationDate !== null && isWithinWindow(applicationDate, last30Days, nowMs);
+  }).length;
 
   return {
     total,
@@ -144,6 +152,24 @@ function calculateCompanyAnalytics(companies) {
     applicationsLast30Days: recentApplications,
     avgPerDay30d: Math.round((recentApplications / 30) * 100) / 100,
   };
+}
+
+function isWithinWindow(value, cutoffMs, nowMs) {
+  const timestamp = value instanceof Date ? value.getTime() : Number.NaN;
+  return Number.isFinite(timestamp) && timestamp >= cutoffMs && timestamp < nowMs;
+}
+
+function parseApplicationDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== value) {
+    return null;
+  }
+
+  return new Date(timestamp);
 }
 
 function generateInsights(dsa, company) {
@@ -209,4 +235,4 @@ function generateRecommendations(dsa, company) {
   return recommendations;
 }
 
-export { getUserAnalytics };
+export { calculateCompanyAnalytics, calculateDSAAnalytics, getUserAnalytics };

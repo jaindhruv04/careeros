@@ -24,6 +24,7 @@ model DSAProblem {
   topic          String
   difficulty     String
   status         String
+  solvedDate     DateTime?
   priority       String
   revisionNeeded Boolean  @default(false)
   notes          String?

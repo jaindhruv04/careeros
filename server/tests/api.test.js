@@ -6,15 +6,79 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { after, before, test } from "node:test";
 import pg from "pg";
+import {
+  calculateCompanyAnalytics,
+  calculateDSAAnalytics,
+} from "../controllers/analyticsController.js";
 
 const { Pool } = pg;
 const serverDirectory = fileURLToPath(new URL("..", import.meta.url));
 const port = 3417;
 const baseUrl = `http://127.0.0.1:${port}`;
 const databaseUrl = process.env.DATABASE_URL;
+const dayInMs = 24 * 60 * 60 * 1000;
 
 let serverProcess;
 let database;
+
+test("analytics calculations use conversion stages and event dates", () => {
+  const now = new Date("2026-11-12T00:00:00.000Z");
+  const solvedAt = (offsetMs) => new Date(now.getTime() + offsetMs);
+  const problem = (status, solvedDate, createdAt = now) => ({
+    status,
+    solvedDate,
+    createdAt,
+    difficulty: "Easy",
+    topic: "Array",
+    revisionNeeded: false,
+  });
+  const dsa = calculateDSAAnalytics(
+    [
+      problem("Solved", solvedAt(-dayInMs), solvedAt(-60 * dayInMs)),
+      problem("Solved", solvedAt(-31 * dayInMs), solvedAt(-dayInMs)),
+      problem("In Progress", solvedAt(-dayInMs)),
+      problem("Solved", solvedAt(-7 * dayInMs)),
+      problem("Solved", solvedAt(-7 * dayInMs - 1)),
+      problem("Solved", solvedAt(-30 * dayInMs)),
+      problem("Solved", solvedAt(-30 * dayInMs - 1)),
+      problem("Solved", solvedAt(1)),
+    ],
+    now,
+  );
+
+  assert.equal(dsa.solvedLast7Days, 2);
+  assert.equal(dsa.solvedLast30Days, 4);
+  assert.equal(dsa.avgPerDay7d, 0.29);
+  assert.equal(dsa.avgPerDay30d, 0.13);
+
+  const company = (status, applicationDate, createdAt = now) => ({
+    status,
+    applicationDate,
+    createdAt,
+    priority: "Medium",
+  });
+  const companies = calculateCompanyAnalytics(
+    [
+      company("Applied", "2026-10-13", solvedAt(-60 * dayInMs)),
+      company("Applied", "2026-10-12"),
+      company("Interviewing", "2026-10-20"),
+      company("Offer", "2026-11-13"),
+      company("Rejected", null),
+      company("Rejected", "2026-02-30"),
+    ],
+    now,
+  );
+
+  assert.equal(companies.interviewConversion, 33.33);
+  assert.equal(companies.applicationsLast30Days, 2);
+  assert.equal(companies.avgPerDay30d, 0.07);
+  assert.equal(
+    calculateCompanyAnalytics([company("Interviewing", null), company("Offer", null)], now)
+      .interviewConversion,
+    100,
+  );
+  assert.equal(calculateCompanyAnalytics([], now).interviewConversion, 0);
+});
 
 async function request(path, { method = "GET", token, body } = {}) {
   const headers = {};
@@ -26,6 +90,12 @@ async function request(path, { method = "GET", token, body } = {}) {
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+}
+
+function dateOnlyDaysAgo(now, days) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - days))
+    .toISOString()
+    .slice(0, 10);
 }
 
 before(async () => {
@@ -247,14 +317,86 @@ test("authenticated API routes enforce access control and persist user data", as
     assert.equal(deleteResponse.status, 200);
   });
 
-  await t.test("returns analytics for the authenticated user's records", async () => {
-    const response = await request("/analytics", { token: firstToken });
-    assert.equal(response.status, 200);
-    const analytics = await response.json();
-    assert.equal(typeof analytics.dsa.solveRate, "number");
-    assert.equal(typeof analytics.companies.total, "number");
-    assert.ok(Array.isArray(analytics.insights));
-    assert.ok(Array.isArray(analytics.recommendations));
+  await t.test("returns analytics using application and solve dates", async () => {
+    const now = new Date();
+    const companyIds = [];
+    const problemIds = [];
+    const companies = [
+      { status: "Applied", applicationDate: dateOnlyDaysAgo(now, 2) },
+      { status: "Applied", applicationDate: dateOnlyDaysAgo(now, 31) },
+      { status: "Interviewing", applicationDate: dateOnlyDaysAgo(now, 2) },
+      { status: "Offer", applicationDate: null },
+      { status: "Rejected", applicationDate: dateOnlyDaysAgo(now, -1) },
+      { status: "Rejected", applicationDate: "2026-02-30" },
+    ];
+
+    try {
+      for (const [index, company] of companies.entries()) {
+        const response = await request("/companies", {
+          method: "POST",
+          token: firstToken,
+          body: {
+            name: `Analytics Company ${index}`,
+            role: "Engineer",
+            priority: "Medium",
+            ...company,
+          },
+        });
+        assert.equal(response.status, 201);
+        companyIds.push((await response.json()).company.id);
+      }
+
+      const problems = [
+        { name: "Recent solve, old record", status: "Solved", solvedDateDaysAgo: 2, createdDaysAgo: 60 },
+        { name: "Old solve, recent record", status: "Solved", solvedDateDaysAgo: 31, createdDaysAgo: 2 },
+        { name: "Unsolved recent date", status: "In Progress", solvedDateDaysAgo: 2, createdDaysAgo: 2 },
+      ];
+
+      for (const [index, problem] of problems.entries()) {
+        const response = await request("/dsa", {
+          method: "POST",
+          token: firstToken,
+          body: {
+            name: problem.name,
+            topic: "Array",
+            difficulty: "Easy",
+            status: problem.status,
+            priority: "Medium",
+          },
+        });
+        assert.equal(response.status, 201);
+        problemIds.push((await response.json()).problem.id);
+
+        const createdAt = new Date(now.getTime() - problem.createdDaysAgo * dayInMs);
+        const solvedDate = new Date(now.getTime() - problem.solvedDateDaysAgo * dayInMs);
+        await database.query(
+          'UPDATE "DSAProblem" SET "createdAt" = $1, "solvedDate" = $2 WHERE "id" = $3',
+          [createdAt, solvedDate, problemIds[index]],
+        );
+      }
+
+      await database.query('UPDATE "Company" SET "createdAt" = $1 WHERE "id" = $2', [
+        new Date(now.getTime() - 60 * dayInMs),
+        companyIds[0],
+      ]);
+
+      const response = await request("/analytics", { token: firstToken });
+      assert.equal(response.status, 200);
+      const analytics = await response.json();
+      assert.equal(analytics.dsa.solvedLast7Days, 1);
+      assert.equal(analytics.dsa.solvedLast30Days, 1);
+      assert.equal(analytics.companies.interviewConversion, 33.33);
+      assert.equal(analytics.companies.applicationsLast30Days, 2);
+      assert.ok(Array.isArray(analytics.insights));
+      assert.ok(Array.isArray(analytics.recommendations));
+    } finally {
+      for (const id of problemIds) {
+        await request(`/dsa/${id}`, { method: "DELETE", token: firstToken });
+      }
+      for (const id of companyIds) {
+        await request(`/companies/${id}`, { method: "DELETE", token: firstToken });
+      }
+    }
   });
 
   // ─── Partial update tests ────────────────────────────────────────────────────
@@ -275,6 +417,7 @@ test("authenticated API routes enforce access control and persist user data", as
     });
     assert.equal(createRes.status, 201);
     const created = (await createRes.json()).problem;
+    assert.equal(created.solvedDate, null);
 
     // Patch only status — all other fields must stay as created.
     const patchRes = await request(`/dsa/${created.id}`, {
@@ -285,6 +428,8 @@ test("authenticated API routes enforce access control and persist user data", as
     assert.equal(patchRes.status, 200);
     const patched = await patchRes.json();
     assert.equal(patched.status, "Solved");
+    assert.ok(patched.solvedDate);
+    const firstSolvedDate = patched.solvedDate;
     assert.equal(patched.name, "Merge Intervals", "name must be unchanged");
     assert.equal(patched.topic, "Array", "topic must be unchanged");
     assert.equal(patched.difficulty, "Medium", "difficulty must be unchanged");
@@ -303,6 +448,24 @@ test("authenticated API routes enforce access control and persist user data", as
     assert.equal(patched2.revisionNeeded, true);
     assert.equal(patched2.status, "Solved", "status must still be Solved");
     assert.equal(patched2.name, "Merge Intervals", "name must be unchanged");
+    assert.equal(patched2.solvedDate, firstSolvedDate, "solvedDate must be preserved while solved");
+
+    const unsolveResponse = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "In Progress" },
+    });
+    assert.equal(unsolveResponse.status, 200);
+    assert.equal((await unsolveResponse.json()).solvedDate, null);
+
+    await delay(5);
+    const resolveResponse = await request(`/dsa/${created.id}`, {
+      method: "PATCH",
+      token: firstToken,
+      body: { status: "Solved" },
+    });
+    assert.equal(resolveResponse.status, 200);
+    assert.ok(Date.parse((await resolveResponse.json()).solvedDate) > Date.parse(firstSolvedDate));
 
     // Cleanup
     await request(`/dsa/${created.id}`, { method: "DELETE", token: firstToken });
@@ -358,6 +521,7 @@ test("authenticated API routes enforce access control and persist user data", as
     assert.equal(createRes.status, 201);
     const created = (await createRes.json()).problem;
     assert.equal(created.notes, "some notes to clear");
+    assert.ok(created.solvedDate);
 
     // Explicit null should clear the nullable field.
     const patchRes = await request(`/dsa/${created.id}`, {
