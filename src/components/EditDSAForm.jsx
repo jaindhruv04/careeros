@@ -3,6 +3,8 @@ import { Check, X } from "lucide-react";
 
 function EditDSAForm({ problem, onSave, onCancel }) {
   const [editedProblem, setEditedProblem] = useState(problem);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -12,9 +14,19 @@ function EditDSAForm({ problem, onSave, onCancel }) {
     }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave(editedProblem);
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await onSave(editedProblem);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "Could not save changes. Please try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   const inputStyle =
@@ -33,8 +45,9 @@ function EditDSAForm({ problem, onSave, onCancel }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div>
-          <label className="block text-[11px] font-mono text-text-muted mb-1">Problem Name</label>
+          <label htmlFor="dsa-edit-name" className="block text-[11px] font-mono text-text-muted mb-1">Problem Name</label>
           <input
+            id="dsa-edit-name"
             className={inputStyle}
             name="name"
             value={editedProblem.name}
@@ -45,8 +58,9 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono text-text-muted mb-1">Topic</label>
+          <label htmlFor="dsa-edit-topic" className="block text-[11px] font-mono text-text-muted mb-1">Topic</label>
           <input
+            id="dsa-edit-topic"
             className={inputStyle}
             name="topic"
             value={editedProblem.topic}
@@ -57,8 +71,9 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono text-text-muted mb-1">Difficulty</label>
+          <label htmlFor="dsa-edit-difficulty" className="block text-[11px] font-mono text-text-muted mb-1">Difficulty</label>
           <select
+            id="dsa-edit-difficulty"
             className={inputStyle}
             name="difficulty"
             value={editedProblem.difficulty}
@@ -71,8 +86,9 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono text-text-muted mb-1">Status</label>
+          <label htmlFor="dsa-edit-status" className="block text-[11px] font-mono text-text-muted mb-1">Status</label>
           <select
+            id="dsa-edit-status"
             className={inputStyle}
             name="status"
             value={editedProblem.status}
@@ -85,8 +101,9 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono text-text-muted mb-1">Priority</label>
+          <label htmlFor="dsa-edit-priority" className="block text-[11px] font-mono text-text-muted mb-1">Priority</label>
           <select
+            id="dsa-edit-priority"
             className={inputStyle}
             name="priority"
             value={editedProblem.priority}
@@ -99,8 +116,9 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         </div>
 
         <div>
-          <label className="block text-[11px] font-mono text-text-muted mb-1">Notes / Approach</label>
+          <label htmlFor="dsa-edit-notes" className="block text-[11px] font-mono text-text-muted mb-1">Notes / Approach</label>
           <input
+            id="dsa-edit-notes"
             className={inputStyle}
             name="notes"
             value={editedProblem.notes || ""}
@@ -127,6 +145,7 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
+          disabled={isSaving}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
@@ -134,12 +153,18 @@ function EditDSAForm({ problem, onSave, onCancel }) {
         </button>
         <button
           type="submit"
+          disabled={isSaving}
           className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono font-medium rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
         >
           <Check className="w-3.5 h-3.5" />
-          Save Changes
+          {isSaving ? "Saving..." : "Save Changes"}
         </button>
       </div>
+      {saveError && (
+        <p role="alert" className="text-sm text-rose-400">
+          {saveError}
+        </p>
+      )}
     </form>
   );
 }

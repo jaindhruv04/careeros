@@ -1,4 +1,8 @@
 import { prisma } from "../lib/prisma.js";
+import {
+  isValidDsaCreatePayload,
+  isValidDsaPatchPayload,
+} from "./dsaPayloadValidation.js";
 
 function getProblemId(value) {
   const id = Number(value);
@@ -6,6 +10,10 @@ function getProblemId(value) {
 }
 
 async function createProblem(req, res) {
+  if (!isValidDsaCreatePayload(req.body)) {
+    return res.status(400).json({ error: "Invalid DSA problem payload" });
+  }
+
   try {
     const {
       name,
@@ -78,6 +86,10 @@ async function updateProblem(req, res) {
 
   if (!id) {
     return res.status(400).json({ error: "Invalid problem ID" });
+  }
+
+  if (!isValidDsaPatchPayload(req.body)) {
+    return res.status(400).json({ error: "Invalid DSA problem payload" });
   }
 
   const {

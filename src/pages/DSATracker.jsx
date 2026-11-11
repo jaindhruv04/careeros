@@ -24,8 +24,15 @@ const inputClass =
 const selectClass = inputClass;
 
 function DSATracker() {
-  const { dsaTopics, loading, addProblem, deleteProblem, updateProblem } =
-    useContext(DSAContext);
+  const {
+    dsaTopics,
+    loading,
+    loadError,
+    retryFetchProblems,
+    addProblem,
+    deleteProblem,
+    updateProblem,
+  } = useContext(DSAContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
@@ -35,6 +42,9 @@ function DSATracker() {
   const [revisionNeeded, setRevisionNeeded] = useState(false);
   const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
@@ -42,48 +52,78 @@ function DSATracker() {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [editingId, setEditingId] = useState(null);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!name.trim()) return;
-    addProblem({
-      id: Date.now(),
-      name,
-      topic,
-      difficulty,
-      status,
-      revisionNeeded,
-      priority,
-      dateAdded: getDateAdded(),
-      notes,
-      archived: false,
-    });
-    setName("");
-    setTopic("");
-    setDifficulty("Easy");
-    setStatus("Not Started");
-    setRevisionNeeded(false);
-    setPriority("Medium");
-    setNotes("");
-    setShowAddForm(false);
+    if (!name.trim() || isSaving) return;
+    setIsSaving(true);
+    setSubmitError("");
+    try {
+      await addProblem({
+        id: Date.now(),
+        name,
+        topic,
+        difficulty,
+        status,
+        revisionNeeded,
+        priority,
+        dateAdded: getDateAdded(),
+        notes,
+        archived: false,
+      });
+      setName("");
+      setTopic("");
+      setDifficulty("Easy");
+      setStatus("Not Started");
+      setRevisionNeeded(false);
+      setPriority("Medium");
+      setNotes("");
+      setShowAddForm(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Could not save the problem. Please check your connection and try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function runProblemAction(action) {
+    setActionError("");
+    try {
+      await action();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "The action failed. Please try again.",
+      );
+    }
   }
 
   function deleteDSA(id) {
-    deleteProblem(id);
+    return runProblemAction(() => deleteProblem(id));
   }
+
   function archiveDSA(id) {
-    updateProblem(id, { archived: true });
+    return runProblemAction(() => updateProblem(id, { archived: true }));
   }
+
   function restoreDSA(id) {
-    updateProblem(id, { archived: false });
+    return runProblemAction(() => updateProblem(id, { archived: false }));
   }
+
   function changeStatus(id, newStatus) {
-    updateProblem(id, { status: newStatus });
+    return runProblemAction(() => updateProblem(id, { status: newStatus }));
   }
+
   function toggleRevision(problem) {
-    updateProblem(problem.id, { revisionNeeded: !problem.revisionNeeded });
+    return runProblemAction(() =>
+      updateProblem(problem.id, { revisionNeeded: !problem.revisionNeeded }),
+    );
   }
-  function saveEdit(problem) {
-    updateProblem(problem.id, problem);
+
+  async function saveEdit(problem) {
+    await updateProblem(problem.id, problem);
     setEditingId(null);
   }
 
@@ -98,6 +138,35 @@ function DSATracker() {
           type="tracker"
           message="SCANNING_DSA_PROBLEMS..."
         />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="DSA Tracker"
+          description="Master data structures and algorithms with active revision tracking and difficulty analytics."
+        />
+        <div
+          role="alert"
+          className="rounded-xl bg-surface border border-border p-6 text-center"
+        >
+          <p className="text-sm font-medium text-text-primary">
+            Unable to load your DSA problems
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Check your connection and retry. Your problem list could not be confirmed.
+          </p>
+          <button
+            type="button"
+            onClick={retryFetchProblems}
+            className="mt-4 px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
+          >
+            Retry loading problems
+          </button>
+        </div>
       </div>
     );
   }
@@ -127,6 +196,7 @@ function DSATracker() {
         action={
           <button
             onClick={() => setShowAddForm(!showAddForm)}
+            disabled={isSaving}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-bg text-xs font-mono font-semibold hover:opacity-90 transition-opacity shadow-sm shadow-accent/10"
           >
             <Plus className="w-4 h-4" />
@@ -148,10 +218,11 @@ function DSATracker() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                <label htmlFor="dsa-add-name" className="block text-[11px] font-mono text-text-muted mb-1">
                   Problem Name *
                 </label>
                 <input
+                  id="dsa-add-name"
                   className={inputClass}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -161,10 +232,11 @@ function DSATracker() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                <label htmlFor="dsa-add-topic" className="block text-[11px] font-mono text-text-muted mb-1">
                   Topic / Category *
                 </label>
                 <input
+                  id="dsa-add-topic"
                   className={inputClass}
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
@@ -174,10 +246,11 @@ function DSATracker() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                <label htmlFor="dsa-add-difficulty" className="block text-[11px] font-mono text-text-muted mb-1">
                   Difficulty
                 </label>
                 <select
+                  id="dsa-add-difficulty"
                   className={selectClass}
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
@@ -189,10 +262,11 @@ function DSATracker() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                <label htmlFor="dsa-add-status" className="block text-[11px] font-mono text-text-muted mb-1">
                   Status
                 </label>
                 <select
+                  id="dsa-add-status"
                   className={selectClass}
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
@@ -204,10 +278,11 @@ function DSATracker() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                <label htmlFor="dsa-add-priority" className="block text-[11px] font-mono text-text-muted mb-1">
                   Priority
                 </label>
                 <select
+                  id="dsa-add-priority"
                   className={selectClass}
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
@@ -219,10 +294,11 @@ function DSATracker() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-text-muted mb-1">
+                <label htmlFor="dsa-add-notes" className="block text-[11px] font-mono text-text-muted mb-1">
                   Key Intuition / Notes
                 </label>
                 <input
+                  id="dsa-add-notes"
                   className={inputClass}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -246,18 +322,25 @@ function DSATracker() {
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
+                  disabled={isSaving}
                   className="px-4 py-2 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  disabled={isSaving}
                   className="px-5 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
                 >
-                  Save Problem
+                  {isSaving ? "Saving..." : "Save Problem"}
                 </button>
               </div>
             </div>
+            {submitError && (
+              <p role="alert" className="text-sm text-rose-400">
+                {submitError}
+              </p>
+            )}
           </form>
         </div>
       )}
@@ -267,6 +350,7 @@ function DSATracker() {
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <input
+            aria-label="Search DSA problems or topics"
             className="w-full bg-surface-subtle border border-border rounded-lg pl-9 pr-3 py-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-accent"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -277,6 +361,7 @@ function DSATracker() {
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <SlidersHorizontal className="w-4 h-4 text-text-muted hidden sm:block" />
           <select
+            aria-label="Filter by difficulty"
             className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
             value={difficultyFilter}
             onChange={(e) => setDifficultyFilter(e.target.value)}
@@ -288,6 +373,7 @@ function DSATracker() {
           </select>
 
           <select
+            aria-label="Filter by revision status"
             className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
             value={revisionFilter}
             onChange={(e) => setRevisionFilter(e.target.value)}
@@ -298,6 +384,7 @@ function DSATracker() {
           </select>
 
           <select
+            aria-label="Filter by priority"
             className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
@@ -309,6 +396,12 @@ function DSATracker() {
           </select>
         </div>
       </div>
+
+      {actionError && (
+        <p role="alert" className="text-sm text-rose-400">
+          {actionError}
+        </p>
+      )}
 
       {/* Problems List */}
       <div className="space-y-3">
@@ -410,6 +503,7 @@ function DSATracker() {
                         Status:
                       </span>
                       <select
+                        aria-label={`Change status for ${problem.name}`}
                         className="bg-surface-subtle border border-border rounded-md px-2 py-1 text-xs text-text-primary font-mono focus:outline-none focus:border-accent"
                         value={problem.status}
                         onChange={(e) => changeStatus(problem.id, e.target.value)}

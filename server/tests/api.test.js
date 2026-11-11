@@ -10,12 +10,15 @@ import {
   calculateCompanyAnalytics,
   calculateDSAAnalytics,
 } from "../controllers/analyticsController.js";
+import { isDedicatedTestDatabaseUrl } from "./testDatabaseSafety.js";
 
 const { Pool } = pg;
 const serverDirectory = fileURLToPath(new URL("..", import.meta.url));
 const port = 3417;
 const baseUrl = `http://127.0.0.1:${port}`;
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.CAREEROS_TEST_DATABASE_URL;
+const allowTestDatabaseReset =
+  process.env.CAREEROS_ALLOW_TEST_DATABASE_RESET === "true";
 const dayInMs = 24 * 60 * 60 * 1000;
 
 let serverProcess;
@@ -99,8 +102,10 @@ function dateOnlyDaysAgo(now, days) {
 }
 
 before(async () => {
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL must point to a migrated test database.");
+  if (!allowTestDatabaseReset || !isDedicatedTestDatabaseUrl(databaseUrl)) {
+    throw new Error(
+      "Database integration tests require CAREEROS_ALLOW_TEST_DATABASE_RESET=true and CAREEROS_TEST_DATABASE_URL targeting a dedicated test database.",
+    );
   }
 
   database = new Pool({ connectionString: databaseUrl });
@@ -112,6 +117,7 @@ before(async () => {
     cwd: serverDirectory,
     env: {
       ...process.env,
+      DATABASE_URL: databaseUrl,
       PORT: String(port),
       JWT_SECRET: "careeros-integration-test-secret",
       GROQ_API_KEY: "test-key-not-used-by-these-tests",
