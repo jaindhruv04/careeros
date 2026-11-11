@@ -1,3 +1,4 @@
+
 name: Backend API tests
 
 on:
@@ -15,6 +16,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16
@@ -36,6 +38,8 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/careeros_test
+      CAREEROS_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/careeros_test
+      CAREEROS_ALLOW_TEST_DATABASE_RESET: "true"
       JWT_SECRET: careeros-ci-test-secret
       GROQ_API_KEY: test-key-not-used-by-these-tests
 
