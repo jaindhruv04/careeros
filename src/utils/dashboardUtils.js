@@ -1,8 +1,11 @@
+/**
+ * Helpers for deriving dashboard stats, priority items, activity, insights, and date labels.
+ */
 export function getOverallStats(
   companies,
   dsaTopics,
   interviewEntries,
-  projects
+  projects,
 ) {
   return {
     totalCompanies: companies.length,
@@ -16,24 +19,16 @@ export function getHighPriorityItems(
   companies,
   dsaTopics,
   interviewEntries,
-  projects
+  projects,
 ) {
   return {
-    companies: companies.filter(
-      (company) => company.priority === "High"
-    ),
+    companies: companies.filter((company) => company.priority === "High"),
 
-    dsaTopics: dsaTopics.filter(
-      (problem) => problem.priority === "High"
-    ),
+    dsaTopics: dsaTopics.filter((problem) => problem.priority === "High"),
 
-    interviews: interviewEntries.filter(
-      (entry) => entry.priority === "High"
-    ),
+    interviews: interviewEntries.filter((entry) => entry.priority === "High"),
 
-    projects: projects.filter(
-      (project) => project.priority === "High"
-    ),
+    projects: projects.filter((project) => project.priority === "High"),
   };
 }
 
@@ -41,18 +36,18 @@ export function getProgressStats(
   companies,
   dsaTopics,
   interviewEntries,
-  projects
+  projects,
 ) {
   const offers = companies.filter(
-    (company) => company.status === "Offer"
+    (company) => company.status === "Offer",
   ).length;
 
   const solved = dsaTopics.filter(
-    (problem) => problem.status === "Solved"
+    (problem) => problem.status === "Solved",
   ).length;
 
   const completedProjects = projects.filter(
-    (project) => project.status === "Completed"
+    (project) => project.status === "Completed",
   ).length;
 
   return {
@@ -82,13 +77,14 @@ export function getRecentActivity(
   companies,
   dsaTopics,
   interviewEntries,
-  projects
+  projects,
 ) {
   const allItems = [
     ...companies.map((company) => ({
       type: "Company",
       title: company.name,
       priority: company.priority,
+
       dateAdded: company.createdAt
         ? new Date(company.createdAt).toLocaleDateString()
         : "",
@@ -102,6 +98,7 @@ export function getRecentActivity(
       dateAdded: problem.createdAt
         ? new Date(problem.createdAt).toLocaleDateString()
         : "",
+
       timestamp: new Date(problem.createdAt || 0).getTime(),
     })),
 
@@ -109,6 +106,7 @@ export function getRecentActivity(
       type: "Interview",
       title: entry.company,
       priority: entry.priority,
+
       dateAdded: entry.createdAt
         ? new Date(entry.createdAt).toLocaleDateString()
         : "",
@@ -126,16 +124,14 @@ export function getRecentActivity(
     })),
   ];
 
-  return allItems
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 5);
+  return allItems.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
 }
 
 export function getQuickInsights(
   companies,
   dsaTopics,
   interviewEntries,
-  projects
+  projects,
 ) {
   const highPriorityItems =
     companies.filter((company) => company.priority === "High").length +
@@ -144,15 +140,15 @@ export function getQuickInsights(
     projects.filter((project) => project.priority === "High").length;
 
   const revisionProblems = dsaTopics.filter(
-    (problem) => problem.revisionNeeded
+    (problem) => problem.revisionNeeded,
   ).length;
 
   const offers = companies.filter(
-    (company) => company.status === "Offer"
+    (company) => company.status === "Offer",
   ).length;
 
   const onHoldProjects = projects.filter(
-    (project) => project.status === "On Hold"
+    (project) => project.status === "On Hold",
   ).length;
 
   return {
