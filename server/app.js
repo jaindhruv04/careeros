@@ -18,6 +18,10 @@ app.use(
   }),
 );
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use("/users", userRouter);
 app.use("/dsa", dsaRouter);
 app.use("/companies", companyRouter);
