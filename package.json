@@ -9,8 +9,7 @@
     "lint": "oxlint",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    "preview": "vite preview",
-    "start": "vite preview --host 0.0.0.0 --port 8080"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
@@ -22,6 +21,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.2",
+    "serve": "^14.2.7",
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
