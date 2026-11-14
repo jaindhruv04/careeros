@@ -45,9 +45,6 @@ export function DSAProvider({ children }) {
       if (!res.ok) throw new Error("Save request failed");
       const data = await res.json();
       if (!data?.problem) throw new Error("Save response was invalid");
-      fetchRequestId.current += 1;
-      setLoading(false);
-      setLoadError(false);
       setDsaTopics((prev) => [...prev, data.problem]);
       return data.problem;
     } catch {
@@ -70,8 +67,6 @@ export function DSAProvider({ children }) {
     }
 
     fetchRequestId.current += 1;
-    setLoading(false);
-    setLoadError(false);
     setDsaTopics((prev) =>
       prev.map((problem) => (problem.id === id ? updatedProblem : problem)),
     );
@@ -87,8 +82,6 @@ export function DSAProvider({ children }) {
     }
 
     fetchRequestId.current += 1;
-    setLoading(false);
-    setLoadError(false);
     setDsaTopics((prev) => prev.filter((problem) => problem.id !== id));
   }
 

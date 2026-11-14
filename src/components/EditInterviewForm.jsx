@@ -3,6 +3,8 @@ import { Check, X } from "lucide-react";
 
 function EditInterviewForm({ entry, onSave, onCancel }) {
   const [editedEntry, setEditedEntry] = useState(entry);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -12,9 +14,19 @@ function EditInterviewForm({ entry, onSave, onCancel }) {
     }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    onSave(editedEntry);
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await onSave(editedEntry);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "Could not save changes. Please try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   const inputStyle =
@@ -137,6 +149,7 @@ function EditInterviewForm({ entry, onSave, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
+          disabled={isSaving}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
@@ -144,12 +157,18 @@ function EditInterviewForm({ entry, onSave, onCancel }) {
         </button>
         <button
           type="submit"
+          disabled={isSaving}
           className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono font-medium rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
         >
           <Check className="w-3.5 h-3.5" />
-          Save Changes
+          {isSaving ? "Saving..." : "Save Changes"}
         </button>
       </div>
+      {saveError && (
+        <p role="alert" className="text-sm text-rose-400">
+          {saveError}
+        </p>
+      )}
     </form>
   );
 }

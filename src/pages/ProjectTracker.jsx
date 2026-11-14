@@ -23,7 +23,7 @@ const inputClass =
 const selectClass = inputClass;
 
 function ProjectTracker() {
-  const { projects, loading, addProject, updateProject, deleteProject } =
+  const { projects, loading, loadError, retryFetchProjects, addProject, updateProject, deleteProject } =
     useContext(ProjectContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -33,6 +33,9 @@ function ProjectTracker() {
   const [status, setStatus] = useState("Planning");
   const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -40,47 +43,68 @@ function ProjectTracker() {
 
   const [editingId, setEditingId] = useState(null);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSaving) return;
+    setIsSaving(true);
+    setSubmitError("");
+    try {
+      await addProject({
+        name,
+        techStack,
+        progress: Number(progress),
+        status,
+        priority,
+        notes,
+        archived: false,
+      });
+      setName("");
+      setTechStack("");
+      setProgress(0);
+      setStatus("Planning");
+      setPriority("Medium");
+      setNotes("");
+      setShowAddForm(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Could not save the project. Please check your connection and try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
-    addProject({
-      name,
-      techStack,
-      progress: Number(progress),
-      status,
-      priority,
-      notes,
-      archived: false,
-    });
-
-    setName("");
-    setTechStack("");
-    setProgress(0);
-    setStatus("Planning");
-    setPriority("Medium");
-    setNotes("");
-    setShowAddForm(false);
+  async function runAction(action) {
+    setActionError("");
+    try {
+      await action();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "The action failed. Please try again.",
+      );
+    }
   }
 
   function handleDelete(id) {
-    deleteProject(id);
+    return runAction(() => deleteProject(id));
   }
 
   function handleArchive(id) {
-    updateProject(id, { archived: true });
+    return runAction(() => updateProject(id, { archived: true }));
   }
 
   function handleRestore(id) {
-    updateProject(id, { archived: false });
+    return runAction(() => updateProject(id, { archived: false }));
   }
 
   function handleChangeStatus(id, newStatus) {
-    updateProject(id, { status: newStatus });
+    return runAction(() => updateProject(id, { status: newStatus }));
   }
 
-  function handleSaveEdit(project) {
-    updateProject(project.id, {
+  async function handleSaveEdit(project) {
+    await updateProject(project.id, {
       name: project.name,
       techStack: project.techStack,
       progress: Number(project.progress),
@@ -102,6 +126,35 @@ function ProjectTracker() {
           type="tracker"
           message="SCANNING_PORTFOLIO_PROJECTS..."
         />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="Project Tracker"
+          description="Showcase full-stack engineering depth, track milestone completion, and document tech stacks."
+        />
+        <div
+          role="alert"
+          className="rounded-xl bg-surface border border-border p-6 text-center"
+        >
+          <p className="text-sm font-medium text-text-primary">
+            Unable to load your projects
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Check your connection and retry. Your project list could not be confirmed.
+          </p>
+          <button
+            type="button"
+            onClick={retryFetchProjects}
+            className="mt-4 px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
+          >
+            Retry loading projects
+          </button>
+        </div>
       </div>
     );
   }
@@ -128,7 +181,7 @@ function ProjectTracker() {
         description="Showcase full-stack engineering depth, track milestone completion, and document tech stacks."
         action={
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => { setShowAddForm(!showAddForm); setSubmitError(""); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-bg text-xs font-mono font-semibold hover:opacity-90 transition-opacity shadow-sm shadow-accent/10"
           >
             <Plus className="w-4 h-4" />
@@ -235,18 +288,24 @@ function ProjectTracker() {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setShowAddForm(false)}
+                onClick={() => { setShowAddForm(false); setSubmitError(""); }}
                 className="px-4 py-2 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="px-5 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
               >
-                Save Project
+                {isSaving ? "Saving..." : "Save Project"}
               </button>
             </div>
+            {submitError && (
+              <p role="alert" className="text-sm text-rose-400">
+                {submitError}
+              </p>
+            )}
           </form>
         </div>
       )}
@@ -290,6 +349,12 @@ function ProjectTracker() {
         </div>
       </div>
 
+      {actionError && (
+        <p role="alert" className="text-sm text-rose-400">
+          {actionError}
+        </p>
+      )}
+
       {/* Project Cards Grid */}
       <div className="space-y-4">
         {filteredProjects.length === 0 ? (
@@ -316,6 +381,7 @@ function ProjectTracker() {
             >
               {editingId === project.id ? (
                 <EditProjectForm
+                  key={editingId}
                   project={project}
                   onSave={handleSaveEdit}
                   onCancel={() => setEditingId(null)}

@@ -16,24 +16,27 @@ import LaserSkeleton from "../components/LaserSkeleton";
 function Analytics() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  async function fetchAnalytics() {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const [res] = await Promise.all([
+        apiFetch("/analytics"),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]);
+      if (!res.ok) throw new Error("Analytics request failed");
+      const analytics = await res.json();
+      setData(analytics);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchAnalytics() {
-      try {
-        const [res] = await Promise.all([
-          apiFetch("/analytics"),
-          new Promise((resolve) => setTimeout(resolve, 800)),
-        ]);
-        if (res.ok) {
-          const analytics = await res.json();
-          setData(analytics);
-        }
-      } catch (err) {
-        console.error("Failed to load analytics", err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchAnalytics();
   }, []);
 
@@ -58,7 +61,23 @@ function Analytics() {
         <ModuleHeader label="Analytics" description="Performance telemetry and placement readiness" />
         <div className="rounded-xl bg-surface border border-dashed border-border p-8 text-center">
           <BarChart3 className="w-10 h-10 text-text-muted mx-auto mb-3 opacity-60" />
-          <p className="text-sm text-text-muted">No telemetry data available yet.</p>
+          {loadError ? (
+            <>
+              <p className="text-sm font-medium text-text-primary">Unable to load analytics</p>
+              <p className="text-xs text-text-muted mt-1">
+                Check your connection and retry.
+              </p>
+              <button
+                type="button"
+                onClick={fetchAnalytics}
+                className="mt-4 px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
+              >
+                Retry loading analytics
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-text-muted">No telemetry data available yet.</p>
+          )}
         </div>
       </div>
     );

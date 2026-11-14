@@ -23,7 +23,7 @@ const inputClass =
 const selectClass = inputClass;
 
 function CompanyTracker() {
-  const { companies, loading, addCompany, updateCompany, deleteCompany } =
+  const { companies, loading, loadError, retryFetchCompanies, addCompany, updateCompany, deleteCompany } =
     useContext(CompanyContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -33,48 +33,73 @@ function CompanyTracker() {
   const [applicationDate, setApplicationDate] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [editingId, setEditingId] = useState(null);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!name.trim()) return;
-    addCompany({
-      id: Date.now(),
-      name,
-      role,
-      status,
-      applicationDate,
-      priority,
-      notes,
-      archived: false,
-    });
-    setName("");
-    setRole("");
-    setStatus("Applied");
-    setApplicationDate("");
-    setPriority("Medium");
-    setNotes("");
-    setShowAddForm(false);
+    if (!name.trim() || isSaving) return;
+    setIsSaving(true);
+    setSubmitError("");
+    try {
+      await addCompany({
+        name,
+        role,
+        status,
+        applicationDate,
+        priority,
+        notes,
+        archived: false,
+      });
+      setName("");
+      setRole("");
+      setStatus("Applied");
+      setApplicationDate("");
+      setPriority("Medium");
+      setNotes("");
+      setShowAddForm(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Could not save the application. Please check your connection and try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function runAction(action) {
+    setActionError("");
+    try {
+      await action();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "The action failed. Please try again.",
+      );
+    }
   }
 
   function deleteComp(id) {
-    deleteCompany(id);
+    return runAction(() => deleteCompany(id));
   }
   function archiveCompany(id) {
-    updateCompany(id, { archived: true });
+    return runAction(() => updateCompany(id, { archived: true }));
   }
   function restoreCompany(id) {
-    updateCompany(id, { archived: false });
+    return runAction(() => updateCompany(id, { archived: false }));
   }
   function changeStatus(id, newStatus) {
-    updateCompany(id, { status: newStatus });
+    return runAction(() => updateCompany(id, { status: newStatus }));
   }
-  function saveEdit(company) {
-    updateCompany(company.id, company);
+  async function saveEdit(company) {
+    await updateCompany(company.id, company);
     setEditingId(null);
   }
 
@@ -89,6 +114,35 @@ function CompanyTracker() {
           type="tracker"
           message="SYNCING_APPLICATIONS_DATABASE..."
         />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="Company Tracker"
+          description="Track your job applications, stages, interviews, and offers in one place."
+        />
+        <div
+          role="alert"
+          className="rounded-xl bg-surface border border-border p-6 text-center"
+        >
+          <p className="text-sm font-medium text-text-primary">
+            Unable to load your applications
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Check your connection and retry. Your application list could not be confirmed.
+          </p>
+          <button
+            type="button"
+            onClick={retryFetchCompanies}
+            className="mt-4 px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
+          >
+            Retry loading applications
+          </button>
+        </div>
       </div>
     );
   }
@@ -111,7 +165,7 @@ function CompanyTracker() {
         description="Track your job applications, stages, interviews, and offers in one place."
         action={
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => { setShowAddForm(!showAddForm); setSubmitError(""); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-bg text-xs font-mono font-semibold hover:opacity-90 transition-opacity shadow-sm shadow-accent/10"
           >
             <Plus className="w-4 h-4" />
@@ -217,18 +271,24 @@ function CompanyTracker() {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setShowAddForm(false)}
+                onClick={() => { setShowAddForm(false); setSubmitError(""); }}
                 className="px-4 py-2 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="px-5 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
               >
-                Save Application
+                {isSaving ? "Saving..." : "Save Application"}
               </button>
             </div>
+            {submitError && (
+              <p role="alert" className="text-sm text-rose-400">
+                {submitError}
+              </p>
+            )}
           </form>
         </div>
       )}
@@ -272,6 +332,12 @@ function CompanyTracker() {
         </div>
       </div>
 
+      {actionError && (
+        <p role="alert" className="text-sm text-rose-400">
+          {actionError}
+        </p>
+      )}
+
       {/* Companies List */}
       <div className="space-y-3">
         {filteredCompanies.length === 0 ? (
@@ -298,6 +364,7 @@ function CompanyTracker() {
             >
               {editingId === company.id ? (
                 <EditCompanyForm
+                  key={editingId}
                   company={company}
                   onSave={saveEdit}
                   onCancel={() => setEditingId(null)}

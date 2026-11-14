@@ -9,7 +9,7 @@ import {
   RotateCcw,
   FileText,
   SlidersHorizontal,
-  RotateCcw as RevisionIcon,
+  RefreshCw as RevisionIcon,
 } from "lucide-react";
 import { DSAContext } from "../context/DSAContext";
 import { getDateAdded } from "../utils/dateUtils";
@@ -59,7 +59,6 @@ function DSATracker() {
     setSubmitError("");
     try {
       await addProblem({
-        id: Date.now(),
         name,
         topic,
         difficulty,
@@ -195,8 +194,7 @@ function DSATracker() {
         description="Master data structures and algorithms with active revision tracking and difficulty analytics."
         action={
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            disabled={isSaving}
+            onClick={() => { setShowAddForm(!showAddForm); setSubmitError(""); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-bg text-xs font-mono font-semibold hover:opacity-90 transition-opacity shadow-sm shadow-accent/10"
           >
             <Plus className="w-4 h-4" />
@@ -321,8 +319,7 @@ function DSATracker() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddForm(false)}
-                  disabled={isSaving}
+                  onClick={() => { setShowAddForm(false); setSubmitError(""); }}
                   className="px-4 py-2 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary"
                 >
                   Cancel
@@ -432,6 +429,7 @@ function DSATracker() {
             >
               {editingId === problem.id ? (
                 <EditDSAForm
+                  key={editingId}
                   problem={problem}
                   onSave={saveEdit}
                   onCancel={() => setEditingId(null)}

@@ -26,7 +26,7 @@ const textareaClass =
   "w-full bg-surface-subtle border border-border rounded-lg p-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent min-h-[70px] resize-y";
 
 function InterviewJournal() {
-  const { interviewEntries, loading, addEntry, updateEntry, deleteEntry } =
+  const { interviewEntries, loading, loadError, retryFetchEntries, addEntry, updateEntry, deleteEntry } =
     useContext(InterviewContext);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -38,6 +38,9 @@ function InterviewJournal() {
   const [lessonsLearned, setLessonsLearned] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [notes, setNotes] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [roundFilter, setRoundFilter] = useState("All");
@@ -45,51 +48,72 @@ function InterviewJournal() {
 
   const [editingId, setEditingId] = useState(null);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!company.trim()) return;
+    if (!company.trim() || isSaving) return;
+    setIsSaving(true);
+    setSubmitError("");
+    try {
+      await addEntry({
+        company,
+        round,
+        questionsAsked,
+        myAnswer,
+        mistakes,
+        lessonsLearned,
+        priority,
+        notes,
+        archived: false,
+      });
+      setCompany("");
+      setRound("Technical");
+      setQuestionsAsked("");
+      setMyAnswer("");
+      setMistakes("");
+      setLessonsLearned("");
+      setPriority("Medium");
+      setNotes("");
+      setShowAddForm(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Could not save the entry. Please check your connection and try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
-    addEntry({
-      company,
-      round,
-      questionsAsked,
-      myAnswer,
-      mistakes,
-      lessonsLearned,
-      priority,
-      notes,
-      archived: false,
-    });
-
-    setCompany("");
-    setRound("Technical");
-    setQuestionsAsked("");
-    setMyAnswer("");
-    setMistakes("");
-    setLessonsLearned("");
-    setPriority("Medium");
-    setNotes("");
-    setShowAddForm(false);
+  async function runAction(action) {
+    setActionError("");
+    try {
+      await action();
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "The action failed. Please try again.",
+      );
+    }
   }
 
   function handleDelete(id) {
-    deleteEntry(id);
+    return runAction(() => deleteEntry(id));
   }
 
   function handleArchive(id) {
-    updateEntry(id, { archived: true });
+    return runAction(() => updateEntry(id, { archived: true }));
   }
 
   function handleRestore(id) {
-    updateEntry(id, { archived: false });
+    return runAction(() => updateEntry(id, { archived: false }));
   }
 
   function handleChangePriority(id, newPriority) {
-    updateEntry(id, { priority: newPriority });
+    return runAction(() => updateEntry(id, { priority: newPriority }));
   }
 
-  function handleSaveEdit(entry) {
-    updateEntry(entry.id, {
+  async function handleSaveEdit(entry) {
+    await updateEntry(entry.id, {
       company: entry.company,
       round: entry.round,
       questionsAsked: entry.questionsAsked,
@@ -117,6 +141,35 @@ function InterviewJournal() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        <ModuleHeader
+          label="Interview Journal"
+          description="Reflect on interview rounds, record actual questions asked, and capture retrospectives."
+        />
+        <div
+          role="alert"
+          className="rounded-xl bg-surface border border-border p-6 text-center"
+        >
+          <p className="text-sm font-medium text-text-primary">
+            Unable to load your interview entries
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Check your connection and retry. Your journal could not be confirmed.
+          </p>
+          <button
+            type="button"
+            onClick={retryFetchEntries}
+            className="mt-4 px-4 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
+          >
+            Retry loading entries
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const filteredEntries = interviewEntries.filter((entry) => {
     const matchesSearch =
       entry.company.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -137,7 +190,7 @@ function InterviewJournal() {
         description="Reflect on interview rounds, record actual questions asked, and capture retrospectives."
         action={
           <button
-            onClick={() => setShowAddForm(!showAddForm)}
+            onClick={() => { setShowAddForm(!showAddForm); setSubmitError(""); }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-bg text-xs font-mono font-semibold hover:opacity-90 transition-opacity shadow-sm shadow-accent/10"
           >
             <Plus className="w-4 h-4" />
@@ -268,18 +321,24 @@ function InterviewJournal() {
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setShowAddForm(false)}
+                onClick={() => { setShowAddForm(false); setSubmitError(""); }}
                 className="px-4 py-2 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="px-5 py-2 text-xs font-mono font-semibold rounded-lg bg-accent text-bg hover:opacity-90"
               >
-                Save Debrief
+                {isSaving ? "Saving..." : "Save Debrief"}
               </button>
             </div>
+            {submitError && (
+              <p role="alert" className="text-sm text-rose-400">
+                {submitError}
+              </p>
+            )}
           </form>
         </div>
       )}
@@ -323,6 +382,12 @@ function InterviewJournal() {
         </div>
       </div>
 
+      {actionError && (
+        <p role="alert" className="text-sm text-rose-400">
+          {actionError}
+        </p>
+      )}
+
       {/* Interview Entries List */}
       <div className="space-y-4">
         {filteredEntries.length === 0 ? (
@@ -349,6 +414,7 @@ function InterviewJournal() {
             >
               {editingId === entry.id ? (
                 <EditInterviewForm
+                  key={editingId}
                   entry={entry}
                   onSave={handleSaveEdit}
                   onCancel={() => setEditingId(null)}
