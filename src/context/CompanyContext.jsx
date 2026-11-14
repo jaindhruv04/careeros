@@ -62,7 +62,6 @@ export function CompanyProvider({ children }) {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Could not delete the company. Please try again.");
-    fetchRequestId.current += 1;
     setCompanies((prev) => prev.filter((c) => c.id !== id));
   }
 

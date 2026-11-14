@@ -62,7 +62,6 @@ export function InterviewProvider({ children }) {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Could not delete the entry. Please try again.");
-    fetchRequestId.current += 1;
     setInterviewEntries((prev) => prev.filter((e) => e.id !== id));
   }
 

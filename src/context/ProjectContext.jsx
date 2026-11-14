@@ -62,7 +62,6 @@ export function ProjectProvider({ children }) {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Could not delete the project. Please try again.");
-    fetchRequestId.current += 1;
     setProjects((prev) => prev.filter((p) => p.id !== id));
   }
 

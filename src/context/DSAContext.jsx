@@ -66,7 +66,6 @@ export function DSAProvider({ children }) {
       throw new Error("The server returned an invalid problem update.");
     }
 
-    fetchRequestId.current += 1;
     setDsaTopics((prev) =>
       prev.map((problem) => (problem.id === id ? updatedProblem : problem)),
     );
@@ -81,7 +80,6 @@ export function DSAProvider({ children }) {
       throw new Error("Could not delete the problem. Please try again.");
     }
 
-    fetchRequestId.current += 1;
     setDsaTopics((prev) => prev.filter((problem) => problem.id !== id));
   }
 

@@ -121,7 +121,6 @@ function EditCompanyForm({ company, onSave, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          disabled={isSaving}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
         >
           <X className="w-3.5 h-3.5" />
