@@ -9,15 +9,16 @@ export function DSAProvider({ children }) {
   const [loadError, setLoadError] = useState(false);
   const fetchRequestId = useRef(0);
 
-  async function fetchProblems() {
+  async function fetchProblems({ isRetry = false } = {}) {
     const requestId = ++fetchRequestId.current;
     setLoading(true);
     setLoadError(false);
     try {
-      const [res] = await Promise.all([
-        apiFetch("/dsa"),
-        new Promise((resolve) => setTimeout(resolve, 800)),
-      ]);
+      const requests = [apiFetch("/dsa")];
+      if (!isRetry) {
+        requests.push(new Promise((resolve) => setTimeout(resolve, 800)));
+      }
+      const [res] = await Promise.all(requests);
       if (!res.ok) throw new Error("DSA problems request failed");
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid DSA problems response");
@@ -53,9 +54,24 @@ export function DSAProvider({ children }) {
   }
 
   async function updateProblem(id, updates) {
+    const {
+      name,
+      topic,
+      difficulty,
+      status,
+      priority,
+      revisionNeeded,
+      notes,
+      archived,
+    } = updates;
+    const patch = Object.fromEntries(
+      Object.entries({ name, topic, difficulty, status, priority, revisionNeeded, notes, archived })
+        .filter(([, v]) => v !== undefined),
+    );
+
     const res = await apiFetch(`/dsa/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(updates),
+      body: JSON.stringify(patch),
     });
     if (!res.ok) {
       throw new Error("Could not save changes. Please try again.");
@@ -89,7 +105,7 @@ export function DSAProvider({ children }) {
         dsaTopics,
         loading,
         loadError,
-        retryFetchProblems: fetchProblems,
+        retryFetchProblems: () => fetchProblems({ isRetry: true }),
         addProblem,
         updateProblem,
         deleteProblem,

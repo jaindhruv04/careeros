@@ -10,9 +10,9 @@ import {
   FileText,
   SlidersHorizontal,
   RefreshCw as RevisionIcon,
+  X,
 } from "lucide-react";
 import { DSAContext } from "../context/DSAContext";
-import { getDateAdded } from "../utils/dateUtils";
 import ModuleHeader from "../components/ModuleHeader";
 import PriorityBadge from "../components/PriorityBadge";
 import StatusBadge from "../components/StatusBadge";
@@ -48,8 +48,10 @@ function DSATracker() {
 
   const [searchText, setSearchText] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [revisionFilter, setRevisionFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
+  const [archivedFilter, setArchivedFilter] = useState("Active");
   const [editingId, setEditingId] = useState(null);
 
   async function handleSubmit(e) {
@@ -65,7 +67,6 @@ function DSATracker() {
         status,
         revisionNeeded,
         priority,
-        dateAdded: getDateAdded(),
         notes,
         archived: false,
       });
@@ -121,8 +122,8 @@ function DSATracker() {
     );
   }
 
-  async function saveEdit(problem) {
-    await updateProblem(problem.id, problem);
+  async function saveEdit(editedFields) {
+    await updateProblem(editingId, editedFields);
     setEditingId(null);
   }
 
@@ -171,11 +172,17 @@ function DSATracker() {
   }
 
   const filteredTopics = dsaTopics.filter((problem) => {
+    // Archived visibility
+    if (archivedFilter === "Active" && problem.archived) return false;
+    if (archivedFilter === "Archived" && !problem.archived) return false;
+
     const matchesSearch =
       problem.name.toLowerCase().includes(searchText.toLowerCase()) ||
       (problem.topic && problem.topic.toLowerCase().includes(searchText.toLowerCase()));
     const matchesDifficulty =
       difficultyFilter === "All" || problem.difficulty === difficultyFilter;
+    const matchesStatus =
+      statusFilter === "All" || problem.status === statusFilter;
     const matchesRevision =
       revisionFilter === "All" ||
       (revisionFilter === "Yes" && problem.revisionNeeded) ||
@@ -183,7 +190,7 @@ function DSATracker() {
     const matchesPriority =
       priorityFilter === "All" || problem.priority === priorityFilter;
     return (
-      matchesSearch && matchesDifficulty && matchesRevision && matchesPriority
+      matchesSearch && matchesDifficulty && matchesStatus && matchesRevision && matchesPriority
     );
   });
 
@@ -370,6 +377,18 @@ function DSATracker() {
           </select>
 
           <select
+            aria-label="Filter by status"
+            className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="All">All Statuses</option>
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Solved">Solved</option>
+          </select>
+
+          <select
             aria-label="Filter by revision status"
             className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
             value={revisionFilter}
@@ -391,13 +410,32 @@ function DSATracker() {
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
+
+          <select
+            aria-label="Filter by archived status"
+            className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-accent font-mono"
+            value={archivedFilter}
+            onChange={(e) => setArchivedFilter(e.target.value)}
+          >
+            <option value="Active">Active</option>
+            <option value="Archived">Archived</option>
+            <option value="All">All</option>
+          </select>
         </div>
       </div>
 
       {actionError && (
-        <p role="alert" className="text-sm text-rose-400">
-          {actionError}
-        </p>
+        <div role="alert" className="flex items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20">
+          <span>{actionError}</span>
+          <button
+            type="button"
+            onClick={() => setActionError("")}
+            aria-label="Dismiss error"
+            className="shrink-0 text-rose-400 hover:text-rose-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* Problems List */}
@@ -411,8 +449,10 @@ function DSATracker() {
             <p className="text-xs text-text-muted mt-1 max-w-sm">
               {searchText ||
               difficultyFilter !== "All" ||
+              statusFilter !== "All" ||
               revisionFilter !== "All" ||
-              priorityFilter !== "All"
+              priorityFilter !== "All" ||
+              archivedFilter !== "Active"
                 ? "No problems match your current search or filters."
                 : "Add your first DSA practice problem to track your solving streak."}
             </p>

@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, X } from "lucide-react";
 
 function EditDSAForm({ problem, onSave, onCancel }) {
   const [editedProblem, setEditedProblem] = useState(problem);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    setEditedProblem(problem);
+  }, [problem]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
@@ -19,7 +23,8 @@ function EditDSAForm({ problem, onSave, onCancel }) {
     setIsSaving(true);
     setSaveError("");
     try {
-      await onSave(editedProblem);
+      const { name, topic, difficulty, status, priority, notes, revisionNeeded } = editedProblem;
+      await onSave({ name, topic, difficulty, status, priority, notes, revisionNeeded });
     } catch (error) {
       setSaveError(
         error instanceof Error ? error.message : "Could not save changes. Please try again.",
